@@ -75,8 +75,8 @@ export function PriorityQueue() {
     if (isGeneratingBriefId) return;
     setIsGeneratingBriefId(candidate.id);
     try {
-      // Invoke deployed cloud Edge Function "api-v1-brief"
-      const { data, error } = await supabase.functions.invoke("api-v1-brief", {
+      // Invoke unified deployed cloud Edge Function "api-v1-us-foodwaste"
+      const { data, error } = await supabase.functions.invoke("api-v1-us-foodwaste", {
         body: { 
           intervention_id: candidate.id,
           trigger_reason: "Manual prioritized optimization request from console." 

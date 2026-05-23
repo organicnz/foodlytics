@@ -1,9 +1,8 @@
-// filename: supabase/functions/api-v1-chat/index.ts
+// filename: supabase/functions/api-v1-advisory/index.ts
 // purpose: Grounded RAG Chat Edge Function using Gemini 3.5 Flash & pgvector semantic search
 // dependencies: Supabase JS SDK, Deno std/http
 // brief_section: Section 7 - AI Layer Architecture & Section 8 - Educational Chat Page
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7"
 
 const corsHeaders = {
@@ -12,7 +11,7 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS Preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -255,7 +254,7 @@ ${JSON.stringify((matchData || []).map((chunk: any) => ({ source_doc: chunk.sour
     }
 
   } catch (error: any) {
-    console.error("api-v1-chat edge function error:", error)
+    console.error("api-v1-advisory edge function error:", error)
     return new Response(
       JSON.stringify({ error: error.message || "An unexpected error occurred during your request." }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

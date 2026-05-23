@@ -13,10 +13,11 @@ import { AdvisorChat } from "@/components/advisor-chat";
 import { CampaignTracker } from "@/components/campaign-tracker";
 import { PriorityQueue } from "@/components/priority-queue";
 import { FridgeScan } from "@/components/fridge-scan";
+import { UsWasteTracker } from "@/components/us-waste-tracker";
 
 export default function Home() {
   // Navigation
-  const [activeTab, setActiveTab] = useState<"dashboard" | "campaign" | "interventions" | "scan" | "advisor">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "campaign" | "interventions" | "scan" | "advisor" | "us-waste">("dashboard");
 
   // Dashboard state
   const [logs, setLogs] = useState<WasteEntry[]>([]);
@@ -155,8 +156,8 @@ export default function Home() {
     setApiWarning(null);
 
     try {
-      // Invoke deployed cloud Edge Function "api-v1-chat"
-      const { data, error } = await supabase.functions.invoke("api-v1-chat", {
+      // Invoke deployed cloud Edge Function "api-v1-advisory"
+      const { data, error } = await supabase.functions.invoke("api-v1-advisory", {
         body: { query: textToSend },
       });
 
@@ -337,6 +338,18 @@ export default function Home() {
               Priority Queue
             </button>
             <button
+              id="tab-btn-us-waste"
+              onClick={() => setActiveTab("us-waste")}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all duration-200 cursor-pointer ${
+                activeTab === "us-waste"
+                  ? "bg-white/10 text-white border border-white/10 shadow-md"
+                  : "text-stone-400 hover:text-white hover:bg-white/5 border border-transparent"
+              }`}
+            >
+              <BarChart3 className="h-3.5 w-3.5 text-emerald-400" />
+              US Waste Tracker
+            </button>
+            <button
               id="tab-btn-scan"
               onClick={() => setActiveTab("scan")}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all duration-200 cursor-pointer ${
@@ -479,6 +492,19 @@ export default function Home() {
               transition={{ duration: 0.25 }}
             >
               <FridgeScan />
+            </motion.div>
+          )}
+
+          {/* TAB: US WASTE TRACKER */}
+          {activeTab === "us-waste" && (
+            <motion.div
+              key="us-waste-view"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.25 }}
+            >
+              <UsWasteTracker />
             </motion.div>
           )}
 
