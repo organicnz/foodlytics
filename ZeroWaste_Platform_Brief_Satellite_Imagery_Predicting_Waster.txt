@@ -1,0 +1,933 @@
+
+
+ZeroWaste Intelligence Platform
+Product Brief & Brainstorming Document
+Next.js  ·  Supabase  ·  Gemini 3.5 Flash  ·  Gemma 4
+May 2026  ·  v1.0 Brainstorm Draft
+
+
+
+1. The Problem — First Principles
+Food waste is not one problem. It is the intersection of six compounding failures across the supply chain:
+
+Root Cause
+Mechanism
+Biological decay
+Every harvested item has an entropy clock. Nothing stops it — only delays it.
+Forecast error
+Farmer, distributor, retailer, consumer all forecast in isolation. Every mismatch is physical waste.
+Misaligned incentives
+Running out costs more than throwing away. Rational actors produce irrational collective waste.
+Externalized costs
+Disposal cost borne by society, not the discarding party. No price signal to change behavior.
+Aesthetic filtering
+Cosmetically non-standard produce culled before market. No nutritional basis for the standard.
+Cold chain gaps
+Infrastructure failure in low-income markets. Food loses the decay race before reaching a buyer.
+
+Scale: 1/3 of all food produced globally is lost or wasted — approximately 2.5 billion tonnes per year. Estimated value: $1 trillion USD. CO₂ equivalent: 8-10% of global greenhouse gas emissions.
+
+2. How Food Waste Is Actually Measured
+Understanding the data methodology is critical before building any analytics platform. Every major report uses the same foundational equation:
+
+Mass Balance Formula: Food Available − Food Consumed = Food Lost/Wasted
+
+Food Available = Production + Imports − Exports − Non-food use
+Food Consumed = Household survey estimates
+The Gap = Loss at each supply chain stage
+
+2.1 Data Sources
+FAO Food Balance Sheets: Annual production, trade, utilization data per country. Primary input for all major reports.
+UNEP Food Waste Index: Consumer + retail stage. Aggregates 1,000+ country studies. Uses kg/capita/year as unit.
+ReFED (US): USDA commodity flows + waste composition studies. Produces dollar-value estimates.
+Satellite / Remote Sensing: NDVI-based crop yield modeling. Emerging method — FAO and WRI expanding this.
+
+2.2 Stage-by-Stage Measurement Methods
+Stage
+What is Measured
+Method
+Farm/Harvest
+Field losses, culled produce
+Crop cutting experiments, farm surveys
+Storage
+Spoilage, pest damage
+Warehouse audits, trader interviews
+Processing
+Trim waste, rejected batches
+Factory line studies, yield coefficients
+Retail
+Unsold/discarded stock
+Scanner/POS data, waste audits, dumpster weighing
+Consumer
+Plate waste, fridge throwaway
+Household diaries, app-based logging, waste composition
+
+Key Uncertainty: Consumer surveys consistently undercount by 30–50% vs physical waste audits. The FAO 1/3 figure carries a wide confidence interval. The math is straightforward — uncertainty lives entirely in the loss rate coefficients.
+
+
+3. Google AI Stack — I/O 2026 Mapping
+I/O 2026 did not produce incremental model updates. It changed the cost and accessibility floor for supply chain AI permanently. Two distinct model tiers serve different parts of the food waste problem:
+
+3.1 Models Released
+Model
+Released
+Key Capability
+Gemini 3.5 Flash
+May 19, 2026 (GA)
+Beats Gemini 3.1 Pro on coding + agentic benchmarks. 4x faster than frontier. $1.50/$9.00 per 1M tokens. Default model in Gemini app + AI Mode.
+Gemini 3.5 Pro
+June 2026 (testing)
+Confirmed — rolling out next month. Full frontier model.
+Gemma 4
+April 2, 2026 (GA)
+4 sizes: 2B / 4B / 26B / 31B. 256K context. 140+ languages. Text + image. Apache 2.0 license — zero commercial restrictions. On-device capable.
+Gemini Omni Flash
+May 19, 2026 (GA)
+Any-input to video output. Physics-grounded generation. SynthID watermarking.
+Antigravity 2.0
+May 19, 2026 (GA)
+Up to 93 parallel sub-agents. 12x faster internally with Gemini 3.5 Flash. Agent-first development platform.
+Gemini Spark
+May 19, 2026 (Beta)
+24/7 personal agent on Google Cloud VMs. Gmail + Calendar + Docs access. Tasks run even when devices are off. Ultra tier ($100/mo).
+
+3.2 Model-to-Problem Mapping
+Waste Cause
+Right Model
+Rationale
+Demand/supply desync
+Gemini 3.5 Flash + Antigravity 2.0
+93-agent parallelism across supply chain nodes. One agent per stakeholder layer.
+Information asymmetry
+Gemma 4 (2B on-device)
+Apache 2.0, runs on $80 Android phone. Smallholder farmers can feed signals upstream with zero API cost.
+Misaligned incentives
+Gemini Spark
+Persistent agent with purchase history + calendar. Nudges consumption at the moment of expiry risk.
+Aesthetic filtering
+Gemma 4 (4B, on-device vision)
+Multimodal grading model at farm gate. No cloud dependency. Separates defective from cosmetically non-standard.
+Cold chain gaps
+Gemma 4 (2B edge deployment)
+Runs on Raspberry Pi-class device inside cold room. Temperature anomaly detection without internet.
+Externalized costs
+Gemini 3.5 Flash (grounding)
+Carbon footprint tagging from receipt images. Surfaces embedded cost at point of purchase.
+
+
+4. Platform Tech Stack
+Derived from the napkin architecture. Every component chosen for a specific reason — not convenience.
+
+Layer
+Technology
+Why This, Not Something Else
+Frontend
+Next.js (Vercel)
+SSR for SEO on public data pages. Edge functions co-located with Vercel CDN. App Router for streaming Gemini responses.
+Backend / DB
+Supabase (serverless)
+Full Postgres — not NoSQL. Real SQL means complex supply chain queries. RLS isolates user data at DB layer. pgvector for semantic search. Realtime for live dashboard updates. Edge Functions for Gemini middleware. Apache 2.0 — self-hostable if needed.
+AI Reasoning
+Gemini 3.5 Flash
+Grounds answers in actual Supabase data rows, not hallucinated statistics. RAG over FAO/UNEP datasets ingested into Supabase vector store.
+Edge / Mobile
+Gemma 4 (2B / 4B)
+On-device inference for offline grading and cold chain monitoring. Apache 2.0 means no licensing cost at scale.
+Data Sources
+FAO FBS, UNEP FWI, WRAP, ReFED
+Ingested into Supabase. Loss rate coefficients stored as structured tables. Gemini queries against real numbers.
+Auth
+Supabase Auth + RLS
+Row Level Security means policy enforcement at the data layer. Operator vs policy vs retailer views controlled at DB level.
+Storage
+Supabase Storage
+Produce images for vision grading. Incident photos. Report artifacts. S3-compatible, CDN-backed.
+
+Key Architectural Principle: Supabase is not just storage — it is the real-world data source that Gemini queries against. Gemini does not generate food waste statistics. It reasons over ingested FAO/UNEP/WRAP numbers stored as structured Supabase tables. The AI layer is a reasoning layer, not a knowledge layer.
+
+
+5. Supabase Schema Design
+5.1 Core Tables
+Table
+Key Columns
+Purpose
+waste_events
+stage, category, quantity_tonnes, region, country, timestamp, source
+Raw waste observations. One row per measurement event. Ingested from FAO/UNEP/WRAP.
+loss_rate_coefficients
+stage, commodity, region, rate_pct, source_study, confidence
+The core coefficients applied to mass balance. Enables stage-by-stage breakdown by region + commodity.
+interventions
+name, stage, region, projected_reduction_pct, effort_level, urgency, status, deployed_at
+Tracks active, committed, and candidate interventions. Powers the 50% campaign tracker.
+intervention_actuals
+intervention_id, period, actual_reduction_tonnes, projected_reduction_tonnes
+Actual vs projected performance per deployed intervention. Detects under/overperformance.
+baselines
+region, commodity, year, total_tonnes, locked_at
+Locked baseline figures. The denominator for any % reduction claim. Never updated after lock.
+risks
+intervention_id, description, probability, impact, mitigation
+Risk register per intervention. Powers the risk panel on the 50% tracker dashboard.
+embeddings
+content, embedding vector(1536), source_doc, chunk_id
+pgvector table for RAG. Chunks of FAO reports, WRAP studies, UNEP methodology docs. Gemini queries this for grounded answers.
+
+5.2 Key Views (Pre-aggregated for Dashboard)
+v_waste_by_stage: Aggregated waste tonnes + percentage by supply chain stage per region. Powers the stage breakdown chart.
+v_intervention_performance: Joins interventions + actuals. Calculates % of projected delivered. Live/committed/gap status.
+v_campaign_progress: Rolls up achieved + committed reductions against the locked baseline. Feeds the master progress bar.
+v_priority_queue: Ranks uncommitted interventions by (reduction_potential / effort_score). The gap-closing lever list.
+
+
+6. Analytics Dashboard — What Is Shown and Why
+Every metric must answer 'what do I do next?' Reporting without decision support is not analytics.
+
+6.1 Three User Personas — Three Metric Sets
+Persona
+Primary Metrics
+Decision They Are Making
+Operator
+Total waste tracked, avoidable %, value lost, CO₂ equivalent
+Where do I deploy my next intervention dollar?
+Policy Analyst
+National waste %, policy gaps, compliance score, subsidy leakage
+Which regulation is underperforming and why?
+Retailer
+SKUs at risk, markdown rate, shrinkage cost, rescued units
+Which products do I mark down today?
+
+6.2 The 50% Reduction Campaign Tracker
+When the goal shifts from 'understand waste' to 'cut waste by 50%', the entire dashboard frame changes:
+
+Baseline is locked: Jan 2026 baseline (2.4M tonnes) cannot move. All % calculations use this denominator.
+Gap alert is the primary UI element: 42% committed + achieved leaves an 8% gap (~96k tonnes). This drives every decision on the screen.
+Interventions in four states: Live (tracking actual vs projected), Committed (not yet deployed), Gap-closing candidates, and Unaddressed.
+Trajectory chart has four lines: Required path / Actual / Committed / With-gap-levers. If actual falls below required for two consecutive months, pull a gap lever immediately.
+Underperformance is surfaced immediately: IoT cold chain intervention at 72% of projected due to 18% sensor dropout rate. This is more important than any trend chart.
+Overperformance triggers expansion: AI produce grading at 108% of projected triggers 'expand candidate' status automatically.
+
+6.3 Priority Intervention Queue
+The core actionable output. Every row includes: what to do, where in the chain, estimated reduction, effort level, urgency, and a direct action button to generate an implementation brief via Gemini 3.5 Flash.
+
+Intervention
+Stage
+Reduction
+Effort
+Urgency
+IoT cold chain alerts — East Africa corridor
+Storage
+−18%
+Low
+High
+AI grading replaces manual cull at 3 farms
+Farm
+−12%
+Medium
+High
+Dynamic markdown triggers at retail (48h before expiry)
+Retail
+−9%
+Low
+Medium
+Consumer expiry nudge agent (pilot 50k users)
+Consumer
+−6%
+Medium
+Medium
+Processing yield coefficient audit — dairy line
+Processing
+−5%
+High
+Low
+
+
+7. AI Layer Architecture
+7.1 Gemini 3.5 Flash — Reasoning Over Real Data
+Gemini is not a knowledge store. It is a reasoning layer. The data lives in Supabase. Gemini receives context from Supabase and reasons over it.
+
+RAG Flow: User query → Supabase pgvector semantic search over embedded FAO/UNEP docs → top-k chunks retrieved → injected into Gemini 3.5 Flash context → grounded answer returned. Gemini never invents a food waste statistic. If the number is not in Supabase, it says so.
+
+7.2 Educational Chat Layer
+Any user on the public main page can ask food waste questions. Gemini 3.5 Flash queries the Supabase vector store and returns answers grounded in the ingested dataset. Not a generic chatbot — a domain-specific reasoning interface.
+
+What percentage of food is wasted at the retail stage in South Asia? → Gemini queries loss_rate_coefficients table, returns the actual coefficient with source citation.
+Which intervention has the highest ROI for a $500k budget? → Gemini queries v_priority_queue view, ranks by reduction_potential / projected_cost.
+Why is the East Africa cold chain intervention underperforming? → Gemini queries intervention_actuals + risks tables, returns structured diagnosis.
+
+7.3 Supabase Edge Function — Gemini Middleware
+All Gemini calls route through a Supabase Edge Function. This keeps the API key server-side, enables caching of frequent queries, enforces rate limits per user tier, and logs all AI interactions for audit.
+
+7.4 Gemma 4 — On-Device / Edge Use Cases
+Use Case
+Model Size
+Deployment
+Why On-Device
+Produce grading at farm gate
+Gemma 4 4B
+Android device
+No internet required. Zero API cost. Instant local inference.
+Cold chain anomaly detection
+Gemma 4 2B
+Raspberry Pi / edge device
+Runs inside cold room. Alerts before spoilage threshold crossed.
+Smallholder inventory signals
+Gemma 4 2B
+Sub-$100 Android phone
+Apache 2.0, no licensing cost. Data stays on device.
+
+
+8. Product Screens — Android Studio Build Targets
+Six core screens for the Android app. Each screen maps directly to a Supabase query and a Gemini call.
+
+Screen 1 — Public Dashboard (Main Page)
+Purpose: Any user sees global / regional food waste data without login.
+Data: v_waste_by_stage view, filtered by region selector.
+AI: Gemini 3.5 Flash chat bar at the bottom of the screen. Queries pgvector embeddings for grounded answers.
+Key UI elements: Stage breakdown bar chart, category donut, trend line, metric cards.
+
+Screen 2 — 50% Campaign Tracker
+Purpose: Logged-in operator tracks progress against the 50% reduction target.
+Data: v_campaign_progress, v_intervention_performance, baselines table.
+AI: Gap alert auto-generated by Gemini when committed savings fall short. Each intervention card has a Gemini 'diagnose' or 'expand' action.
+Key UI elements: Master progress bar (achieved / committed / gap), trajectory chart (4 lines), intervention cards by status, risk panel.
+
+Screen 3 — Priority Intervention Queue
+Purpose: Ranks all interventions by ROI. Operator decides what to fund next.
+Data: v_priority_queue view. Effort and urgency scores from interventions table.
+AI: Each row has 'Generate brief ↗' button. Gemini produces a structured implementation brief using the intervention row + regional context from Supabase.
+
+Screen 4 — Educational Chat Page
+Purpose: Any user can ask any food waste question. Publicly accessible.
+Data: embeddings table (pgvector). FAO, UNEP, WRAP documents chunked and embedded.
+AI: Gemini 3.5 Flash with RAG. Every answer cites the source document and the specific data row it used.
+Key UI elements: Conversational interface. Source citations shown inline. 'Explore this data ↗' button links to the relevant dashboard view.
+
+Screen 5 — Intervention Detail View
+Purpose: Deep dive on a single intervention. Actual vs projected over time. Risk register.
+Data: intervention_actuals + risks tables. Joined on intervention_id.
+AI: Gemini diagnoses underperformance using actual vs projected delta + risk factors. Suggests corrective actions grounded in comparable intervention data from Supabase.
+
+Screen 6 — Region / Country Drilldown
+Purpose: Filter entire platform to a specific country or region. All metrics, interventions, and chat responses scoped to that geography.
+Data: All Supabase queries filtered by region/country. Supabase RLS enforces data access by operator tier.
+AI: Gemini chat context includes the active region filter. 'What is causing high storage losses in Sub-Saharan Africa?' returns region-specific data only.
+
+
+9. Data Sources and Ingestion Pipeline
+The platform is only as good as its data. This section covers three tiers: conventional published datasets, satellite imagery, and unconventional real-time signals that no existing food waste platform currently harvests. The combination of all three is a structural competitive advantage.
+
+9.1 Conventional Published Datasets
+Source
+Update Frequency
+What Is Ingested
+FAO FAOSTAT
+Annual (March)
+Food Balance Sheets for 180+ countries. Production, imports, exports, utilization, supply gap. Primary mass balance input.
+UNEP Food Waste Index
+Biennial
+Country-level loss rate coefficients by stage and commodity. The coefficients Gemini applies to mass balance calculations.
+WRAP Studies
+Ad hoc
+UK + global retail and consumer waste composition data. Most granular retail-stage data publicly available.
+ReFED
+Annual
+US commodity-level waste data with dollar-value estimates. Processing and retail stage detail.
+EU RASFF Database
+Real-time (public)
+Every food shipment rejected at EU ports of entry. Quantity, origin, commodity, rejection reason. Precisely geolocated, timestamped, quantity-verified loss events with a paper trail. Freely accessible.
+Partner IoT Feeds
+Real-time
+Cold chain sensor telemetry. Temperature + humidity anomalies. Feeds intervention_actuals table directly.
+
+Ingestion Architecture: FAO/UNEP data → Python ingest script → Supabase loss_rate_coefficients table. Documents (PDFs) → text extraction → chunking → Gemini embedding API → Supabase pgvector embeddings table. IoT feeds → Supabase Edge Function → intervention_actuals table with real-time upsert.
+
+9.2 Satellite Imagery — Farm-Stage Loss Detection
+Satellites do not see food waste directly. They measure spectral proxies that correlate with crop stress, yield gaps, and unharvested area. This covers approximately 28% of the total waste problem (farm and harvest stage) but with a resolution and frequency no ground survey can match.
+
+What satellites measure
+Index / Signal
+Sensor
+Food Waste Inference
+NDVI
+Sentinel-2, Planet
+Crop health and biomass. Anomalous drops before visible wilting = stress event = pre-harvest loss risk.
+NDWI
+Sentinel-2
+Crop water stress. Drought stress is a primary driver of pre-harvest field loss.
+NDRE (Red Edge)
+Sentinel-2, Planet
+Earlier disease and nitrogen deficiency detection than NDVI. Catches stress 1–2 weeks earlier.
+LST (Land Surface Temperature)
+MODIS, Landsat
+Heat stress zones within a single field at 30m resolution. Maps intra-field loss heterogeneity.
+SAR Backscatter
+Sentinel-1 (radar)
+Detects standing crop residue vs clean harvest. Estimates unharvested area. Penetrates cloud cover — critical for tropical regions.
+Yield gap model
+Derived from above
+Difference between modelled expected yield (historical NDVI curve) and actual. The gap is a field-level loss proxy.
+
+Satellite data sources
+Sentinel-2 (ESA): Free. 10m resolution, 5-day revisit. The backbone of most academic food loss work. FAO and WRI both use Sentinel-2 NDVI in their loss coefficient models.
+Planet Labs: Commercial. Daily 3m resolution of every agricultural field on earth. Used by agri-insurers for crop damage claims today.
+NASA MODIS / VIIRS: Free. Coarser (250m–500m) but daily. Used for continental-scale yield anomaly detection and early warning.
+Google Earth Engine: Processing layer. Makes all of the above queryable at scale without downloading petabytes. Callable from Python with a 20-line API call.
+
+How satellite feeds into the platform
+Coefficient updater: Sentinel-2 NDVI anomaly scores per region/commodity → Earth Engine API → Supabase Edge Function → updates loss_rate_coefficients table with source='satellite'. Gemini reasons over coefficients that are weeks old, not years old like the FAO annual survey.
+Antigravity early warning: If satellite detects a large NDVI anomaly in a region with active interventions, PerformanceWatcher pre-emptively flags those interventions as at-risk — 2–4 weeks before intervention_actuals numbers come in.
+
+Honest limitations of satellite data
+Covers farm/harvest stage only — approximately 28% of total waste. Cannot see storage, transit, retail, or consumer losses.
+Resolution floor: even at 3m you cannot identify individual damaged fruit. You identify stressed zones, not culled items.
+Tropical cloud cover: Sentinel-2 (optical) blind during monsoon season in South/Southeast Asia and Sub-Saharan Africa. Sentinel-1 SAR compensates partially.
+Ground truth required: NDVI anomaly → yield gap is a model inference. Requires periodic field survey calibration to remain accurate.
+
+
+9.3 Unconventional Real-Time Signals
+These are data sources no existing food waste platform currently harvests. Each correlates with a specific stage of waste with high signal fidelity. They are listed in order of integration effort — lowest first.
+
+Tier 1 — Low effort, integrate this week (no commercial agreements needed)
+
+Signal
+Stage
+Latency
+What It Tells You
+Municipal truck scale data
+Consumer
+Days
+Every garbage truck is weighed in/out at landfill or transfer station. Delta = load weight. Routes are public. Overlaying routes with commercial zones gives a spatial food waste heatmap at street level. Public records request in most jurisdictions.
+EU RASFF port rejection logs
+Import/export
+Days
+Freely accessible structured database. Every rejected food shipment at EU borders: quantity, origin, commodity, rejection reason. Precisely verified loss events. Parse the public RSS feed into waste_events table automatically.
+Google Trends recipe search velocity
+Demand signal
+Real-time
+Sudden spikes in recipe searches for an ingredient → supply chains over-order → surplus and waste. Sudden drops (post-contamination scare) → stranded inventory. Google Trends API is free. Run as a demand signal into the loss_rate_coefficients adjustment layer.
+Wastewater BOD / COD readings
+Consumer / processing
+Hours
+Food waste decomposing spikes Biochemical Oxygen Demand in wastewater. Treatment plants measure this continuously. BOD spikes on Monday mornings (post-weekend restaurant waste) and after major holidays are reliable indirect food waste signals. Utility API or FOIA request.
+
+Tier 2 — Medium effort, requires API agreement or partnership
+
+Signal
+Stage
+Latency
+What It Tells You
+Supermarket ESL markdown velocity
+Retail
+Real-time
+Electronic Shelf Label price tag systems log every markdown event. Rate of markdown on a SKU in the 48 hours before expiry is a waste event in progress. A product marked down 3 times in 6 hours is almost certainly heading for the bin. Every major UK and EU supermarket has this data sitting on their internal network.
+Food delivery app unavailability timestamps
+Consumer / food-service
+Hours
+When Swiggy, Zomato, or DoorDash mark a dish unavailable mid-service, it is usually because the ingredient spoiled or ran out. Unavailability timestamp + dish type + time of day at scale across millions of restaurants is a granular real-time signal for the most measurement-poor stage of the chain.
+Cold storage facility power draw
+Storage
+Real-time
+Industrial cold stores are massive electricity consumers. When a cold store is full of produce the compressor load profile is predictable. Anomalous load patterns — compressor cycling irregularly, working harder than expected — correlate with temperature regulation failure right before a spoilage event. Smart meter data from cold storage operators.
+Refrigerated truck door-open event logs
+Transport
+Real-time
+Refrigerated trucks log every door open event via telematics (Samsara, Geotab, Webfleet). A door held open too long or opened too many times on a single route breaks the cold chain. This is the most granular transport-stage cold chain signal available and it is currently going nowhere in fleet management dashboards.
+Compost facility weight manifests
+All downstream
+Weekly
+Industrial composting facilities weigh every incoming load by source (supermarket, commercial kitchen, processor). Some of the most accurate commercial food waste measurements in existence sit in these manifests. They are held by individual operators and have never been aggregated into a public dataset.
+
+Tier 3 — High effort, high value, requires institutional access
+
+Signal
+Stage
+Latency
+What It Tells You
+Crop insurance claim databases
+Farm
+Monthly
+Every crop insurance claim is a precisely geolocated, timestamped, quantity-verified food loss event with a cause code: drought, flood, pest, disease. PMFBY in India, USDA RMA in the US, Swiss Re / Munich Re globally. Arguably the most accurate farm-stage loss dataset in existence. Locked in actuarial systems.
+Airline / hotel food procurement actuals
+Food-service
+Weekly
+Airlines and hotel chains operate on fixed meal counts per flight/room night. Their procurement systems know exactly how many portions were ordered vs loaded vs returned uneaten. The portion return rate per route and meal type is one of the most precise food waste measurements anywhere. Held by catering contractors: LSG Sky Chefs, Dnata, Sodexo. Never aggregated externally.
+Pharmacy expiry return logs
+Regulated food categories
+Monthly
+Pharmacy chains have mandatory expiry tracking and log every returned or destroyed product. The same regulatory infrastructure covers infant formula and medical nutrition. The logging discipline is already there and the waste rates are precisely recorded. Nobody has pointed a food waste analytics lens at it.
+
+9.4 Build Priority for MVP
+Immediate (this week, no agreements needed): 1. EU RASFF RSS feed → Python parser → waste_events table (source='rasff'). Structured public data, already machine-readable.
+2. Google Trends API for top 20 commodities → Supabase Edge Function cron → demand_signals table. Free, real-time, demand-side early warning.
+3. Sentinel-2 NDVI anomaly via Google Earth Engine API → loss_rate_coefficients update for 3 pilot regions. Free data, 20-line Python call.
+
+Month 2 (needs partnership conversations): 4. One municipal authority truck scale data sharing agreement → spatial waste heatmap for one city.
+5. One cold storage operator smart meter data feed → anomaly detection pilot.
+6. One supermarket chain ESL markdown velocity feed → real-time retail waste signal.
+
+Strategic differentiator: Every competitor (Tractable, CCC, Snapsheet, existing NGO dashboards) uses the same FAO/UNEP published datasets. The platform that ingests RASFF + Sentinel-2 NDVI + Google Trends demand signals + municipal truck scales is operating on a fundamentally different — and more current — information layer. That gap compounds over time.
+
+
+10. What AI Cannot Solve — Honest Gaps
+The platform addresses information and coordination failures extremely well. It cannot address:
+
+Problem
+Why AI Cannot Fix It Alone
+Policy and regulation
+Incentive restructuring requires governments. The platform can surface the data that makes the case, but cannot enforce.
+Cold chain capital
+Physical refrigeration infrastructure requires development finance, not algorithms.
+Consumer behavior change
+Nudges help at the margin. Habits formed over decades are stubborn. Opt-out rates may exceed 40% for notification agents.
+Global data standardization
+FAO and national governments need to agree on schemas and reporting frequencies before the coefficients become reliable at country level.
+Biological decay
+Entropy cannot be stopped. Cold chain and packaging delay it. The platform optimizes the delay, not the decay.
+
+Honest Assessment: The architecture for a global food waste intelligence platform was a $50M enterprise project two years ago. With Gemini 3.5 Flash, Gemma 4 (Apache 2.0), Supabase, and Next.js, it is buildable by a small team on GCP + Vercel in months. The technology barrier has collapsed. The data quality and policy barriers have not.
+
+
+11. Open Questions for Brainstorm Session
+Product
+Who is the paying customer in the B2B model — the insurer, the retailer, the NGO, or the government?
+Is the educational chat layer a free acquisition channel (growth) or a premium feature?
+How does a smallholder farmer in Kenya access the platform? SMS interface? WhatsApp bot? Gemma 4 on a feature phone?
+At what data granularity does the platform become genuinely useful vs the existing FAO FAOSTAT portal?
+
+Technical
+Supabase Realtime vs polling for live IoT cold chain feeds — at what sensor volume does Realtime become a bottleneck?
+pgvector vs a dedicated vector DB (Pinecone, Weaviate) — at what embedding volume does pgvector degrade?
+Gemini 3.5 Flash rate limits at scale — what is the right caching strategy for the educational chat layer?
+How do we handle conflicting coefficients between FAO and UNEP for the same stage/region/commodity combination?
+
+Data
+Which three countries have the highest-quality primary data for a credible MVP launch?
+How do we handle the 30-50% self-report undercount in consumer surveys? Do we apply a correction factor, or display the raw number with an uncertainty band?
+What is the minimum viable dataset to make the Gemini RAG layer meaningfully better than a general web search?
+
+50% Target
+Who sets the 50% target? Is this a platform commitment, a government mandate, or an operator self-commitment?
+What is the governance model when an intervention is consistently underperforming — who has authority to deprioritize it?
+How do you prevent baseline gaming (operators inflating the 2026 baseline to make 50% easier to claim)?
+
+12. Cerebral Valley Google I/O Hackathon — Alignment Scoring
+Cerebral Valley is hosting a Gemini hackathon on May 23, 2026 in San Francisco with the Google DeepMind team, focused on turning I/O model releases into working products. This section maps the ZeroWaste platform against the known judging criteria and documents the gap-closing additions made to maximize alignment.
+
+12.1 Alignment Scorecard
+Criterion
+Score
+Reasoning
+Uses I/O 2026 model releases
+9/10
+Gemini 3.5 Flash GA + Gemma 4 both dropped at I/O May 19. The platform is built on the exact models announced 4 days ago. Gemini 3.5 Flash powers the RAG layer; Gemma 4 handles on-device grading and cold chain monitoring.
+Real shippable product
+8/10
+Supabase + Next.js + Gemini is a production stack, not a demo wrapper. The RAG layer grounded in real FAO/UNEP data is credible and differentiated. RLS, pgvector, Edge Functions — these are production decisions.
+Technical depth
+8/10
+pgvector RAG, Supabase Edge Functions as Gemini middleware, Gemma 4 on-device vision grading, Antigravity 2.0 two-agent flow. This is not a thin API wrapper.
+Multimodal use of Gemini
+9/10
+Gemini Omni Flash added: user photographs fridge or supermarket shelf, Omni analyzes the image and returns per-item expiry risk and waste probability. Directly uses the flagship I/O 2026 generative media model.
+Agentic / Antigravity angle
+9/10
+Antigravity 2.0 two-agent monitoring loop added and fully specced: Agent 1 watches intervention_actuals table in Supabase for performance drops, Agent 2 fires a Gemini-generated corrective brief automatically. Small, real, demoable in one day.
+Real-world impact clarity
+10/10
+1/3 of all food produced globally is lost or wasted. 50% reduction target with quantified baselines. $840M estimated value loss in pilot dataset. CO₂ equivalent surfaced per user action. Impossible to argue with the problem scale.
+Demo-ability in one day
+9/10
+Demo scoped ruthlessly to three interactions: (1) RAG chat query grounded in Supabase UNEP data, (2) Gemini Omni fridge scan returning expiry risk, (3) Antigravity gap alert firing on a live intervention. Each takes under 30 seconds to show.
+
+Overall Alignment: 9/10 Every gap from the initial assessment has been addressed with a buildable, demoable addition. The pitch in one sentence: Google Maps for food waste — every number grounded in real FAO/UNEP data, every insight powered by Gemini 3.5 Flash, every intervention tracked to the tonne.
+
+
+13. Gap-Closing Addition 1 — Gemini Omni Fridge Scan
+The highest-impact addition for the Cerebral Valley hackathon. Directly uses Gemini Omni Flash, the flagship I/O 2026 generative media model. Closes the multimodal gap from 7/10 to 9/10.
+
+13.1 What It Does
+User photographs their fridge or a supermarket shelf. Gemini Omni Flash analyzes the image and returns:
+A per-item inventory list with identified food categories
+Estimated days to expiry per item based on visual freshness signals
+Waste probability score (0–100) per item
+Suggested actions: cook tonight, freeze, donate, or discard
+Running household waste estimate aggregated over time
+
+13.2 Why This Wins at the Hackathon
+Gemini Omni Flash is the most visible I/O 2026 release. Showing it applied to a real consumer problem — reducing personal food waste — in a working demo is exactly what the DeepMind team wants to see. It also bridges the platform from B2B supply chain tool to consumer-facing product, dramatically expanding the addressable market story.
+
+13.3 Buildable Code Spec
+Android Implementation: // 1. Capture image via CameraX (already in ClaimReady stack)
+val imageBytes = captureImage() // ByteArray
+
+// 2. Encode to base64
+val base64Image = Base64.encodeToString(imageBytes, Base64.DEFAULT)
+
+// 3. POST to Supabase Edge Function
+val response = supabaseClient.functions.invoke(
+    "gemini-fridge-scan",
+    body = mapOf("image" to base64Image)
+)
+
+// 4. Parse Gemini Omni response
+val items = response.data["items"] // list of {name, days_to_expiry, waste_prob, action}
+
+Supabase Edge Function (gemini-fridge-scan): // Deno / TypeScript
+const { image } = await req.json()
+
+const geminiResponse = await fetch(
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-omni-flash:generateContent',
+  {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
+    body: JSON.stringify({
+      contents: [{
+        parts: [
+          { inline_data: { mime_type: 'image/jpeg', data: image } },
+          { text: `Analyze this fridge/shelf photo. Return JSON only:
+{
+  "items": [
+    {
+      "name": "string",
+      "category": "produce|dairy|meat|grains|other",
+      "estimated_days_to_expiry": number,
+      "waste_probability_score": number (0-100),
+      "recommended_action": "cook_tonight|freeze|donate|discard|fine",
+      "reason": "string"
+    }
+  ],
+  "total_waste_risk_kg": number,
+  "household_co2_impact_kg": number
+}` }
+        ]
+      }]
+    })
+  }
+)
+
+const result = await geminiResponse.json()
+return result.candidates[0].content.parts[0].text
+
+13.4 Screen 7 — Fridge Scan (New Android Screen)
+Entry point: Camera FAB on the main dashboard. One tap to scan.
+Output: Card list of identified items. Each card shows item name, expiry countdown bar, waste probability badge (green/amber/red), and recommended action.
+Aggregate: Bottom of screen: 'Your estimated weekly waste: 0.8 kg / $4.20 / 2.1 kg CO₂'. Tapping links to the educational chat for recipes.
+Data written back: waste_events table in Supabase with source='consumer_scan'. Feeds the platform's consumer-stage waste estimates over time.
+
+
+14. Gap-Closing Addition 2 — Antigravity 2.0 Two-Agent Monitoring Loop
+A minimal but genuine agentic implementation using Antigravity 2.0. Closes the agentic gap from 6/10 to 9/10. Scoped deliberately small so it is buildable and demoable in one day.
+
+14.1 What It Does
+Two agents run continuously on Google Cloud via Antigravity 2.0:
+
+Agent
+Name
+Behaviour
+Agent 1
+PerformanceWatcher
+Polls intervention_actuals table in Supabase every 15 minutes. Calculates actual_reduction_tonnes / projected_reduction_tonnes ratio. If ratio drops below 0.80 (80% of projected) for two consecutive periods, fires a trigger to Agent 2.
+Agent 2
+BriefGenerator
+Receives trigger from Agent 1 containing the intervention_id and the underperformance delta. Queries Supabase for the intervention record, regional context, and the risks table. Calls Gemini 3.5 Flash to generate a structured corrective brief. Writes the brief to a briefs table and sends a push notification to the operator.
+
+14.2 Why Two Agents, Not One
+Separation of concerns. PerformanceWatcher is a deterministic polling agent — no AI needed, just arithmetic against Supabase. BriefGenerator is the AI reasoning layer. Keeping them separate means PerformanceWatcher can fire multiple downstream agents in future (slack alert, email, dashboard flag) without touching the AI logic. This is the Antigravity 2.0 multi-agent architecture in its simplest correct form.
+
+14.3 Buildable Code Spec
+Agent 1 — PerformanceWatcher (Antigravity 2.0 / Python): import antigravity as ag
+import supabase
+
+@ag.agent(schedule='*/15 * * * *')  # every 15 min
+def performance_watcher():
+    sb = supabase.create_client(SUPABASE_URL, SUPABASE_KEY)
+    
+    # Fetch latest two periods per intervention
+    actuals = sb.table('intervention_actuals') \
+        .select('intervention_id, actual_reduction_tonnes, projected_reduction_tonnes, period') \
+        .order('period', desc=True).limit(100).execute()
+    
+    # Group by intervention, check last 2 periods
+    for intervention_id, rows in group_by_intervention(actuals.data):
+        last_two = rows[:2]
+        if all(r['actual'] / r['projected'] < 0.80 for r in last_two):
+            ag.trigger('brief_generator', payload={
+                'intervention_id': intervention_id,
+                'delta': last_two[0]['actual'] / last_two[0]['projected']
+            })
+
+Agent 2 — BriefGenerator (Antigravity 2.0 / Python): @ag.agent(trigger='brief_generator')
+def brief_generator(payload):
+    sb = supabase.create_client(SUPABASE_URL, SUPABASE_KEY)
+    intervention_id = payload['intervention_id']
+    delta = payload['delta']
+    
+    # Pull context from Supabase
+    intervention = sb.table('interventions').select('*').eq('id', intervention_id).single().execute()
+    risks = sb.table('risks').select('*').eq('intervention_id', intervention_id).execute()
+    
+    # Build Gemini prompt with real data
+    prompt = f"""
+    Intervention: {intervention.data['name']}
+    Stage: {intervention.data['stage']}
+    Region: {intervention.data['region']}
+    Performance: {delta:.0%} of projected reduction delivered
+    Active risks: {[r['description'] for r in risks.data]}
+    
+    Generate a structured corrective brief with:
+    1. Root cause hypothesis (2-3 sentences)
+    2. Three immediate actions ranked by impact
+    3. Leading indicator to watch next 30 days
+    """
+    
+    brief = call_gemini_35_flash(prompt)
+    
+    # Write to Supabase
+    sb.table('briefs').insert({
+        'intervention_id': intervention_id,
+        'content': brief,
+        'triggered_at': 'now()'
+    }).execute()
+    
+    # Push notification to operator
+    ag.notify(operator_id=intervention.data['operator_id'], message=f'Intervention underperforming at {delta:.0%} — brief generated')
+
+14.4 Demo Flow for the Hackathon
+In the live demo, trigger the underperformance condition manually by inserting a low actual_reduction_tonnes row into Supabase. The audience watches:
+PerformanceWatcher detects the drop within 15 minutes (set to 30 seconds for demo).
+BriefGenerator fires, queries Supabase for the intervention context and risks.
+Gemini 3.5 Flash returns a structured corrective brief in under 3 seconds.
+The brief appears live in the Android app intervention detail screen with a push notification.
+
+The Demo Pitch Moment: The DeepMind team watches an AI agent detect a real-world supply chain failure, reason over grounded data, and produce an actionable brief — entirely automatically. No human in the loop. This is Antigravity 2.0 doing exactly what it was designed for, applied to a problem that affects 2.5 billion tonnes of food annually.
+
+
+15. Hackathon Demo Script — Three Interactions, 90 Seconds
+Scope ruthlessly. Judges see dozens of projects. Three interactions, each under 30 seconds, each showing a different I/O 2026 capability. No slides. No architecture walkthrough. Show, then explain.
+
+#
+Interaction
+What the Judge Sees
+Model Used
+1
+RAG Chat Query
+Type: 'What % of produce is wasted at storage stage in Sub-Saharan Africa?' → Gemini 3.5 Flash returns the exact UNEP coefficient with source citation and triggers a live chart update on the dashboard. 0 hallucinated statistics.
+Gemini 3.5 Flash + Supabase pgvector
+2
+Gemini Omni Fridge Scan
+Point phone at a collection of food items. Omni returns a per-item card list: 'Spinach — 2 days to expiry, 78% waste risk, cook tonight.' Total estimated household waste displayed in kg and CO₂.
+Gemini Omni Flash (I/O 2026 flagship)
+3
+Antigravity Gap Alert
+Insert a low actual row into Supabase live. Agent 1 detects it. Agent 2 fires. Gemini 3.5 Flash brief appears in the Android app in under 10 seconds with a push notification. The 50% campaign tracker gap alert updates automatically.
+Antigravity 2.0 + Gemini 3.5 Flash
+
+One-Sentence Pitch: Google Maps for food waste — every number grounded in real FAO/UNEP data, every insight powered by Gemini 3.5 Flash, every intervention tracked to the tonne, and now every fridge scanned by Gemini Omni.
+
+16. Immediate Next Steps
+#
+Action
+Owner
+By
+1
+Set up Supabase project. Create loss_rate_coefficients and waste_events tables. Ingest FAO Food Balance Sheets for 3 pilot countries.
+Backend
+Week 1
+2
+Scaffold Next.js app on Vercel. Connect to Supabase. Render v_waste_by_stage view as a static chart on the public page.
+Frontend
+Week 1
+3
+Build Supabase Edge Function as Gemini middleware. Implement basic RAG: embed 3 FAO PDF documents into pgvector, test semantic retrieval.
+Backend
+Week 2
+4
+Wire educational chat UI to Edge Function. Validate that Gemini answers cite Supabase rows, not training data.
+Full stack
+Week 2
+5
+Build 50% campaign tracker screen. Hardcode one real intervention with actual vs projected data. Validate the gap alert logic.
+Frontend
+Week 3
+6
+Android Studio: scaffold Kotlin app with Jetpack Compose. Implement public dashboard screen consuming Supabase REST API.
+Android
+Week 3
+7
+Gemma 4 on-device pilot: integrate 4B model into Android app for produce grading. Test on 5 real images. Measure latency on mid-range device.
+Android / ML
+Week 4
+8
+Cerebral Valley hackathon: implement Gemini Omni fridge scan (Screen 7). Wire CameraX → Supabase Edge Function → Omni Flash → per-item card UI.
+Android / Backend
+Today
+9
+Cerebral Valley hackathon: implement Antigravity 2.0 two-agent loop. PerformanceWatcher + BriefGenerator. Test with manually inserted low actual row.
+Backend
+Today
+10
+Scope demo to 3 interactions. No slides. RAG chat query → Omni fridge scan → Antigravity gap alert. Rehearse to under 90 seconds.
+All
+Today
+
+
+
+17. AI Studio Master Prompt — Full Product Implementation
+Paste the following prompt into Google AI Studio (Gemini 3.5 Flash, thinking enabled, 1M context window). It is written as a single self-contained system prompt that gives the model everything it needs to generate the complete ZeroWaste platform implementation: Supabase schema, Next.js frontend, Android Kotlin app, Supabase Edge Functions, Antigravity agents, and Gemini Omni integration. Feed this to AI Studio once, then iterate on individual sections.
+
+How to use: 1. Open AI Studio — aistudio.google.com
+2. New prompt — select gemini-3.5-flash, enable thinking, set output tokens to max
+3. Paste the entire prompt block below as the System Instruction
+4. In the User turn, type the specific module you want generated first (e.g. 'Generate the complete Supabase schema SQL')
+5. Iterate module by module. The system prompt holds full context so each output is coherent with the rest.
+
+17.1 The Master Prompt
+Copy everything between the START and END markers verbatim into AI Studio System Instructions:
+
+--- AISTUDIO SYSTEM PROMPT START --- 
+
+You are the lead architect and senior full-stack engineer for ZeroWaste Intelligence Platform — a production-grade food waste analytics and intervention tracking system. Your job is to generate complete, production-ready, copy-paste-deployable code and configuration for every layer of this platform. Never generate stubs, placeholders, or pseudocode. Every file you produce must run without modification.
+
+PRODUCT CONTEXT
+ZeroWaste is a public-facing food waste intelligence platform with three personas: supply chain operators, policy analysts, and retailers. Its primary goal is to help users cut food waste by 50% against a locked Jan 2026 baseline. The platform is also submitted to the Cerebral Valley Google I/O Hackathon (May 23, 2026, SF) judged by the Google DeepMind team.
+
+TECH STACK — NON-NEGOTIABLE
+Frontend: Next.js 15 (App Router, RSC, streaming). Deployed on Vercel. TypeScript throughout. Tailwind CSS. shadcn/ui components. No class components.
+Backend / Database: Supabase. Full Postgres. pgvector for embeddings. Row Level Security on all tables. Supabase Edge Functions (Deno/TypeScript) as the sole middleware layer between frontend and Gemini. Never call Gemini directly from the frontend.
+AI — Cloud: Gemini 3.5 Flash (model ID: gemini-3.5-flash) for all RAG reasoning, brief generation, and chat. Gemini Omni Flash (model ID: gemini-omni-flash) for the fridge scan vision feature. Both called via Supabase Edge Functions only.
+AI — On-device: Gemma 4 4B via Google AI Edge / LiteRT. Integrated into the Android app via MediaPipe Tasks GenAI. Used for offline produce grading and cold chain anomaly detection.
+Agents: Antigravity 2.0 (Python SDK). Two agents: PerformanceWatcher (scheduled polling) and BriefGenerator (event-triggered). Both agents read/write to Supabase.
+Android: Kotlin. Jetpack Compose. CameraX for image capture. Retrofit for Supabase REST API calls. Firebase Cloud Messaging for push notifications from Antigravity agents.
+Auth: Supabase Auth. Three roles: operator, policy_analyst, retailer. RLS policies enforce role-based data access at the database layer.
+
+SUPABASE SCHEMA — IMPLEMENT EXACTLY
+Generate complete SQL migration files for the following tables. Include RLS policies, indexes, and foreign keys. Use uuid as primary keys throughout.
+waste_events (id, stage, category, quantity_tonnes, region, country, timestamp, source, operator_id)
+loss_rate_coefficients (id, stage, commodity, region, country, rate_pct, source_study, confidence, year, source_type ['published'|'satellite'|'realtime'])
+baselines (id, region, commodity, year, total_tonnes, locked_at, locked_by)
+interventions (id, name, stage, region, operator_id, projected_reduction_pct, projected_reduction_tonnes, effort_level, urgency, status, deployed_at, target_date)
+intervention_actuals (id, intervention_id, period, actual_reduction_tonnes, projected_reduction_tonnes, recorded_at)
+risks (id, intervention_id, description, probability, impact, mitigation, status)
+briefs (id, intervention_id, content, triggered_at, trigger_reason, acknowledged_at, operator_id)
+embeddings (id, content, embedding vector(1536), source_doc, chunk_id, metadata jsonb)
+fridge_scans (id, user_id, scanned_at, items jsonb, total_waste_risk_kg, total_co2_impact_kg, image_path)
+demand_signals (id, commodity, region, search_velocity_index, week_start, source, pct_change_wow)
+satellite_anomalies (id, region, commodity, ndvi_score, anomaly_zscore, captured_at, sensor, affected_area_ha)
+ingest_logs (id, script_name, started_at, completed_at, rows_inserted, rows_failed, error_detail)
+
+Also generate these Postgres views:
+v_waste_by_stage: aggregated waste_tonnes and percentage by stage and region
+v_intervention_performance: interventions joined with actuals, calculating actual/projected ratio and performance status
+v_campaign_progress: achieved and committed reductions rolled up against the locked baseline per region
+v_priority_queue: uncommitted interventions ranked by projected_reduction_tonnes divided by effort_score
+
+NEXT.JS SCREENS — IMPLEMENT ALL SEVEN
+Generate complete page.tsx, components, and API route handlers for each screen. Use Supabase server-side client (createServerClient) for data fetching in Server Components. Stream Gemini responses using ReadableStream.
+Screen 1 — Public Dashboard: app/page.tsx. No auth required. Stage breakdown horizontal bar chart (Recharts). Category donut (Recharts). 6-month trend line (Recharts). Metric cards grid. Region selector (URL param). Gemini 3.5 Flash chat bar fixed at bottom. Chat calls /api/chat Edge route.
+Screen 2 — 50% Campaign Tracker: app/campaign/page.tsx. Auth required (operator role). Master progress bar showing achieved (dark green) / committed (light green) / gap (gray). Trajectory chart (4 lines: required path / actual / committed / with-gap-levers). Intervention cards grouped by status (live / committed / gap-closing). Gap alert banner when committed savings < 50% target. Risk panel.
+Screen 3 — Priority Intervention Queue: app/interventions/page.tsx. Auth required. Table from v_priority_queue view. Columns: name, stage, projected reduction (progress bar), effort badge, urgency badge, Generate Brief button. Brief button POSTs to /api/brief Edge route which calls Gemini 3.5 Flash with intervention context from Supabase.
+Screen 4 — Educational Chat: app/chat/page.tsx. Public. Full-screen conversational interface. Each message streams from /api/chat. Every answer includes source citation block showing the Supabase row and document chunk used. Explore button links to the relevant dashboard view.
+Screen 5 — Intervention Detail: app/interventions/[id]/page.tsx. Auth required. Actual vs projected line chart over time. Risk register table (CRUD). Gemini diagnosis panel showing the latest brief from the briefs table. Acknowledge button marks brief as read.
+Screen 6 — Region Drilldown: app/region/[region]/page.tsx. All screens filtered by region param. Supabase RLS enforces operator data access. Chat context includes active region filter injected into the system prompt.
+Screen 7 — Fridge Scan (Next.js web version): app/scan/page.tsx. getUserMedia camera capture in browser. Base64 encode. POST to /api/scan Edge route. Gemini Omni Flash analyzes image. Returns per-item card list with expiry countdown, waste probability badge, recommended action. Aggregate household waste displayed. Writes result to fridge_scans table.
+
+SUPABASE EDGE FUNCTIONS — IMPLEMENT ALL FOUR
+Generate complete Deno TypeScript files for each function. Include error handling, input validation, and Supabase client initialisation from environment variables.
+gemini-chat: Receives {query, region?, history[]}. Runs pgvector semantic search on embeddings table (top 5 chunks). Injects chunks + region filter into Gemini 3.5 Flash system prompt. Streams response back. Appends source citations from chunk metadata.
+gemini-brief: Receives {intervention_id}. Fetches intervention, actuals, and risks from Supabase. Builds structured prompt. Calls Gemini 3.5 Flash. Writes result to briefs table. Returns brief content.
+gemini-fridge-scan: Receives {image: base64 string, user_id}. Calls Gemini Omni Flash with image + structured JSON output prompt. Parses response. Writes to fridge_scans table. Returns items array with waste risk and recommended actions.
+embed-document: Receives {content, source_doc, chunk_id, metadata}. Calls Gemini embedding API (models/text-embedding-004). Writes vector + content to embeddings table. Used during data ingestion pipeline.
+
+ANTIGRAVITY 2.0 AGENTS — IMPLEMENT BOTH
+Generate complete Python files using the Antigravity 2.0 SDK. Include Supabase client initialisation, error handling, retry logic, and FCM push notification dispatch.
+performance_watcher.py: Scheduled agent (@ag.agent(schedule='*/15 * * * *')). Queries intervention_actuals for the latest two periods per active intervention. Calculates actual/projected ratio. If ratio < 0.80 for two consecutive periods, calls ag.trigger('brief_generator', payload={intervention_id, delta, operator_id}). Logs all evaluations to a monitoring table.
+brief_generator.py: Event-triggered agent (@ag.agent(trigger='brief_generator')). Receives payload. Queries Supabase for intervention + risks context. Calls Gemini 3.5 Flash with structured prompt. Writes brief to briefs table. Sends FCM push notification to operator device via Firebase Admin SDK.
+
+ANDROID APP — IMPLEMENT ALL SCREENS
+Generate complete Kotlin files using Jetpack Compose. Use Retrofit for Supabase REST API. CameraX for image capture. MediaPipe Tasks GenAI for Gemma 4 on-device inference. Firebase Cloud Messaging for push notifications. MVVM architecture with ViewModel and StateFlow.
+MainActivity.kt: Bottom navigation with 4 tabs: Dashboard, Campaign, Scan, Chat. NavHost with Compose Navigation.
+DashboardScreen.kt: Calls Supabase v_waste_by_stage view. Renders horizontal bar chart using Vico library. Metric cards. Region filter dropdown. Gemini chat bottom sheet.
+CampaignScreen.kt: Master progress bar (Canvas composable, three segments). Trajectory chart (Vico). Intervention cards with status badges. Gap alert Card with amber background when gap > 0.
+FridgeScanScreen.kt: CameraX preview. Capture button. Base64 encodes image. POSTs to Supabase Edge Function gemini-fridge-scan. Renders LazyColumn of item cards: name, expiry bar, waste probability badge (green/amber/red), action chip. Aggregate waste summary at top.
+ProduceGradingScreen.kt: CameraX preview. On-device Gemma 4 4B inference via MediaPipe Tasks GenAI. Runs without internet. Returns grade (A/B/C/reject), visual defect flags, and estimated shelf life. Result written to waste_events table via background Retrofit call when connectivity available.
+ChatScreen.kt: Conversational UI. Messages streamed via Supabase Realtime channel. Each assistant message includes a collapsible SourceCard showing the Supabase row and document used.
+FCM integration: MyFirebaseMessagingService.kt handles incoming brief notifications from Antigravity. Tapping notification deep-links to InterventionDetailScreen with the brief_id.
+
+DATA INGESTION PIPELINE
+Generate Python scripts for the following ingestion pipelines. Each script must be idempotent (safe to re-run), log errors to a Supabase ingest_logs table, and write source metadata alongside every row.
+ingest_fao.py: Downloads FAO Food Balance Sheets CSV for India, Kenya, Brazil from fao.org/faostat. Parses into loss_rate_coefficients table. Embeds each row as a natural language sentence via embed-document Edge Function.
+ingest_rasff.py: Parses the EU RASFF public RSS feed (https://webgate.ec.europa.eu/rasff-window/portal/rss). Maps rejection events to waste_events table with source='rasff'. Runs daily via cron.
+ingest_google_trends.py: Calls Google Trends API for top 20 food commodities. Stores weekly search velocity index in a demand_signals table. Flags commodities where velocity dropped >30% week-over-week as potential surplus risk.
+ingest_sentinel2.py: Calls Google Earth Engine API. Pulls Sentinel-2 NDVI anomaly scores for 3 pilot regions (India, Kenya, Brazil). Compares against 5-year historical NDVI baseline. Updates loss_rate_coefficients rows with source='satellite' where anomaly score exceeds 1.5 standard deviations.
+ingest_municipal_scales.py: Template script for ingesting municipal truck scale CSV exports. Maps route ID to geographic zone using a zones lookup table. Aggregates kg per zone per week into waste_events table with source='municipal_scales'.
+
+ENVIRONMENT VARIABLES
+Generate a complete .env.local template for Next.js and a .env template for the Antigravity agents covering: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, GEMINI_API_KEY, FIREBASE_PROJECT_ID, FIREBASE_ADMIN_CREDENTIALS_PATH, ANTIGRAVITY_API_KEY.
+
+OUTPUT FORMAT RULES — FOLLOW EXACTLY
+When asked to generate a specific module, output the complete file with no truncation. If the file exceeds your context, split into Part 1 / Part 2 and say so.
+Every code file must start with a comment block: filename, purpose, dependencies, and which section of this brief it implements.
+Never use TODO, FIXME, placeholder, or stub anywhere in generated code.
+Never use hardcoded API keys. Always read from process.env or Deno.env.get().
+All Supabase queries must use typed clients generated from the schema. Generate the types/supabase.ts file first.
+All Gemini calls route through Supabase Edge Functions. Never call Gemini API directly from Next.js server components or Android.
+Android code must compile against minSdk 26, targetSdk 35, Kotlin 2.0, Compose BOM 2025.05.00.
+SQL migration files must be idempotent (IF NOT EXISTS, CREATE OR REPLACE VIEW).
+RLS policies must be included in the same migration file as the table they protect.
+
+GENERATION ORDER
+When the user says 'start', generate in this exact order, one module per response, waiting for confirmation before proceeding:
+supabase/migrations/001_schema.sql — all tables, views, indexes, RLS policies
+types/supabase.ts — full TypeScript types generated from schema
+supabase/functions/gemini-chat/index.ts — RAG chat Edge Function
+supabase/functions/gemini-fridge-scan/index.ts — Omni vision Edge Function
+supabase/functions/gemini-brief/index.ts — brief generation Edge Function
+supabase/functions/embed-document/index.ts — embedding ingest Edge Function
+app/page.tsx + components — Public Dashboard screen (Next.js)
+app/campaign/page.tsx + components — 50% Campaign Tracker screen
+app/interventions/page.tsx + [id]/page.tsx — Priority Queue and Detail screens
+app/chat/page.tsx + app/scan/page.tsx — Chat and Fridge Scan screens
+agents/performance_watcher.py — Antigravity Agent 1
+agents/brief_generator.py — Antigravity Agent 2
+android/app/src/main/java/com/zerowaste/ — all Kotlin screens and ViewModels
+scripts/ingest_fao.py — FAO data ingestion pipeline
+.env.local + .env templates — all environment variables
+
+--- AISTUDIO SYSTEM PROMPT END --- 
+
+17.2 How to Iterate After First Generation
+After pasting the system prompt and typing 'start', AI Studio will generate the schema SQL. For each subsequent module, use these follow-up prompts:
+
+Goal
+Follow-up Prompt to Type
+Fix a specific error
+'The Supabase Edge Function gemini-chat throws a 500 when region is null. Here is the error: [paste error]. Fix the input validation and return a 400 with a clear message.'
+Add a screen not in spec
+'Add Screen 8: a producer onboarding flow where a farm registers their location, crop types, and cold chain status. Write to a new producers table. Include the SQL migration and the Next.js page.'
+Harden for production
+'Add rate limiting to all four Edge Functions: 60 requests per minute per user for gemini-chat, 10 per minute for gemini-fridge-scan. Use Supabase Redis or an in-memory sliding window.'
+Expand the Android app
+'Add offline mode to the Android Dashboard screen. Cache the last successful v_waste_by_stage response in Room database. Show a banner when the app is offline and serving cached data.'
+Tune the RAG prompt
+'The Gemini chat answers are too verbose. Rewrite the system prompt in gemini-chat Edge Function to constrain answers to 3 sentences maximum with one source citation. Keep grounding logic unchanged.'
+Add the Gemma 4 grading model
+'Generate the complete Android Kotlin implementation of ProduceGradingScreen.kt using MediaPipe Tasks GenAI with Gemma 4 4B. Include the model download flow, inference call, result parsing, and offline fallback UI.'
+
+17.3 Android Studio Specific Prompt
+For generating the Android app directly inside Android Studio using its AI assistant (Gemini Code Assist), use this focused prompt as the initial context:
+
+Android Studio Gemini Code Assist Prompt: I am building ZeroWaste — an Android app in Kotlin/Jetpack Compose that helps users and supply chain operators reduce food waste by 50%. The backend is Supabase (Postgres + pgvector + Edge Functions). The AI layer is Gemini 3.5 Flash for cloud reasoning and Gemma 4 4B on-device for offline produce grading via MediaPipe Tasks GenAI.
+
+Architecture: MVVM. Retrofit for Supabase REST. CameraX for image capture. Vico for charts. Firebase Cloud Messaging for push notifications from Antigravity 2.0 agents.
+
+I need you to generate, screen by screen, production-ready Kotlin/Compose code. Start with the project structure: build.gradle.kts (all dependencies), AndroidManifest.xml (permissions: CAMERA, INTERNET, POST_NOTIFICATIONS), and MainActivity.kt with bottom navigation (Dashboard, Campaign, Scan, Chat tabs).
+
+Constraints: minSdk 26, targetSdk 35, Kotlin 2.0, Compose BOM 2025.05.00. No XML layouts. No deprecated APIs. Every ViewModel uses StateFlow and viewModelScope. Every Retrofit call is wrapped in a Result type.
+
+After I confirm the project structure compiles, generate each screen file on request.
+
+Critical tip: AI Studio works best when you give it one file at a time and paste in any compilation errors before asking for the next file. The system prompt above holds the full product context so you do not need to re-explain the architecture in follow-up messages — just paste the error or name the next file.
+
+
+ZeroWaste Intelligence Platform · Product Brief v2.0 · May 2026 · Cerebral Valley Google I/O Hackathon Edition
