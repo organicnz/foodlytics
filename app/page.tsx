@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Leaf, BarChart3, Sparkle, CookingPot, ChevronRight } from "lucide-react";
+import { Leaf, BarChart3, Sparkles, CookingPot, ChevronRight, Database, RotateCw } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { FoodCategory, WasteReason, CATEGORY_METRIC_MAP, WasteEntry, ChatMessage } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
@@ -20,6 +20,10 @@ export default function Home() {
   const [isLoadingLogs, setIsLoadingLogs] = useState(true);
   const [logsError, setLogsError] = useState<string | null>(null);
 
+  // Live DB Sync Observer HUD states
+  const [dbStatus, setDbStatus] = useState<"connected" | "syncing" | "error">("connected");
+  const [dbLatency, setDbLatency] = useState<number | null>(null);
+
   // Advisor Chat State
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
@@ -36,6 +40,8 @@ export default function Home() {
   // Fetch initial logs directly from Supabase Cloud
   const fetchLogs = async () => {
     setIsLoadingLogs(true);
+    setDbStatus("syncing");
+    const startTime = performance.now();
     try {
       const { data, error } = await supabase
         .from("household_waste_logs")
@@ -45,6 +51,10 @@ export default function Home() {
       if (error) {
         throw new Error(error.message);
       }
+
+      const endTime = performance.now();
+      setDbLatency(Math.round(endTime - startTime));
+      setDbStatus("connected");
 
       const mappedData: WasteEntry[] = (data || []).map((item) => ({
         id: item.id,
@@ -61,6 +71,7 @@ export default function Home() {
       setLogs(mappedData);
       setLogsError(null);
     } catch (err: any) {
+      setDbStatus("error");
       setLogsError(err.message || "Could not connect to the Supabase database.");
     } finally {
       setIsLoadingLogs(false);
@@ -80,6 +91,7 @@ export default function Home() {
     reason: WasteReason;
     date: string;
   }) => {
+    setDbStatus("syncing");
     try {
       const metrics = CATEGORY_METRIC_MAP[logData.category];
       const co2Val = Number((logData.weight * metrics.co2PerLb).toFixed(1));
@@ -102,12 +114,14 @@ export default function Home() {
 
       await fetchLogs();
     } catch (err: any) {
+      setDbStatus("error");
       throw new Error(err.message || "Error saving log to Supabase");
     }
   };
 
   // Handle Log Deletion directly in Supabase
   const handleDeleteLog = async (id: string) => {
+    setDbStatus("syncing");
     try {
       const { error } = await supabase.from("household_waste_logs").delete().eq("id", id);
 
@@ -116,6 +130,7 @@ export default function Home() {
       }
       await fetchLogs();
     } catch (err: any) {
+      setDbStatus("error");
       alert("Error deleting entry from Supabase: " + err.message);
     }
   };
@@ -208,37 +223,87 @@ export default function Home() {
     (Object.values(reasonCounts) as number[]).reduce((s, c) => s + c, 0) || 1;
 
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-850 font-sans antialiased flex flex-col flex-1">
+    <div className="min-h-screen text-stone-200 font-sans antialiased flex flex-col flex-1 pb-12">
+      
       {/* Upper Navigation Header bar */}
       <header
         id="foodlytics-header"
-        className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-stone-200/50 px-6 py-4"
+        className="sticky top-0 z-40 bg-black/40 backdrop-blur-md border-b border-white/5 px-6 py-4"
       >
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          
           {/* Brand Logo Unit */}
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-emerald-200/50 shrink-0">
-              <Leaf className="h-5 w-5 fill-emerald-100/20" />
+            <div className="h-10 w-10 bg-emerald-600/20 border border-emerald-500/30 rounded-xl flex items-center justify-center text-emerald-450 text-emerald-400 shadow-inner shrink-0 animate-pulse">
+              <Leaf className="h-5 w-5 fill-emerald-400/20" />
             </div>
             <div>
-              <h1 className="font-display text-2xl font-bold text-stone-900 tracking-tight flex items-center gap-2">
+              <h1 className="font-display text-2xl font-black text-white tracking-tight flex items-center gap-2">
                 Foodlytics
               </h1>
-              <p className="text-xs text-stone-500 font-bold">
+              <p className="text-[10px] text-stone-400 uppercase tracking-widest font-extrabold">
                 Sustainable household food waste tracker & AI advisor
               </p>
             </div>
           </div>
 
+          {/* Live DB Sync Observer HUD (Center/Right aligned) */}
+          <div className="flex flex-wrap items-center gap-4 bg-black/30 border border-white/5 px-4 py-2 rounded-2xl text-[11px] font-bold shadow-inner">
+            <div className="flex items-center gap-2 pr-3 border-r border-white/10">
+              <Database className="h-4 w-4 text-emerald-400" />
+              <span className="text-stone-400">Database Context:</span>
+              <span className="text-white font-extrabold">Supabase Cloud</span>
+            </div>
+
+            <div className="flex items-center gap-2 pr-3 border-r border-white/10">
+              <span className="text-stone-400">Connection Status:</span>
+              <span className="inline-flex items-center gap-1.5 font-extrabold text-white">
+                <span className={`h-2.5 w-2.5 rounded-full inline-block ${
+                  dbStatus === "connected"
+                    ? "bg-emerald-500 shadow-md shadow-emerald-500/50 animate-pulse"
+                    : dbStatus === "syncing"
+                    ? "bg-amber-500 shadow-md shadow-amber-500/50 animate-bounce"
+                    : "bg-rose-500 shadow-md shadow-rose-500/50 animate-ping"
+                }`} />
+                {dbStatus === "connected" && "Active 🟢"}
+                {dbStatus === "syncing" && "Syncing 🟡"}
+                {dbStatus === "error" && "Offline 🔴"}
+              </span>
+            </div>
+
+            {dbLatency !== null && (
+              <div className="flex items-center gap-1.5 pr-3 border-r border-white/10">
+                <span className="text-stone-400">Latency:</span>
+                <span className="text-emerald-400 font-mono font-extrabold">{dbLatency}ms</span>
+              </div>
+            )}
+
+            <div className="flex items-center gap-1.5 pr-2">
+              <span className="text-stone-400">Synced Items:</span>
+              <span className="text-white font-mono font-extrabold bg-white/5 border border-white/10 rounded px-1.5 py-0.5">
+                {logs.length}
+              </span>
+            </div>
+
+            <button
+              onClick={fetchLogs}
+              disabled={isLoadingLogs}
+              title="Pull fresh data from Supabase DB"
+              className="p-1 text-stone-400 hover:text-white hover:bg-white/5 rounded-lg border border-transparent hover:border-white/10 transition-all cursor-pointer disabled:opacity-50"
+            >
+              <RotateCw className={`h-3.5 w-3.5 ${dbStatus === "syncing" ? "animate-spin" : ""}`} />
+            </button>
+          </div>
+
           {/* Navigation Control Unit */}
-          <div className="flex items-center bg-stone-100 p-1 rounded-xl border border-stone-200/50 font-semibold text-sm">
+          <div className="flex items-center bg-black/25 p-1 rounded-2xl border border-white/5 font-bold text-xs">
             <button
               id="tab-btn-dashboard"
               onClick={() => setActiveTab("dashboard")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs md:text-sm transition-all duration-200 cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 cursor-pointer ${
                 activeTab === "dashboard"
-                  ? "bg-white text-emerald-800 shadow-sm"
-                  : "text-stone-600 hover:text-stone-950 hover:bg-stone-50"
+                  ? "bg-white/10 text-white border border-white/10 shadow-md"
+                  : "text-stone-450 text-stone-400 hover:text-white hover:bg-white/5 border border-transparent"
               }`}
             >
               <BarChart3 className="h-4 w-4" />
@@ -247,13 +312,13 @@ export default function Home() {
             <button
               id="tab-btn-advisor"
               onClick={() => setActiveTab("advisor")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs md:text-sm transition-all duration-200 cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 cursor-pointer ${
                 activeTab === "advisor"
-                  ? "bg-white text-emerald-800 shadow-sm"
-                  : "text-stone-600 hover:text-stone-950 hover:bg-stone-50"
+                  ? "bg-white/10 text-white border border-white/10 shadow-md"
+                  : "text-stone-450 text-stone-400 hover:text-white hover:bg-white/5 border border-transparent"
               }`}
             >
-              <Sparkle className="h-4 w-4 text-emerald-600" />
+              <Sparkles className="h-4 w-4 text-emerald-400" />
               AI Advisor
             </button>
           </div>
@@ -263,8 +328,8 @@ export default function Home() {
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 w-full flex-1 flex flex-col justify-start">
         {logsError && (
-          <div className="mb-6 p-4 bg-rose-50 border border-rose-200/50 text-rose-800 rounded-xl text-sm font-semibold flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-rose-500 animate-ping" />
+          <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 text-rose-350 text-rose-400 rounded-2xl text-xs font-bold flex items-center gap-2.5 animate-bounce">
+            <span className="h-2 w-2 rounded-full bg-rose-500 animate-ping shrink-0" />
             {logsError}
           </div>
         )}
@@ -289,9 +354,10 @@ export default function Home() {
               />
 
               {/* Grid 2: Core Analytics Visualizers & Add Form */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                
                 {/* Column A & B (2/3 width) - Charts Panel */}
-                <div className="lg:col-span-2 space-y-8">
+                <div className="lg:col-span-2 space-y-6">
                   <CategoryInsights
                     logs={logs}
                     weightByCategory={weightByCategory}
@@ -303,24 +369,24 @@ export default function Home() {
                   />
 
                   {/* Informational Zero-Waste Educational Grid Panel */}
-                  <div className="bg-emerald-900/5 rounded-2xl p-6 border border-emerald-900/10 flex flex-col md:flex-row items-center gap-6 justify-between">
+                  <div className="glass-panel border-none rounded-2xl p-6 bg-gradient-to-br from-emerald-950/20 to-emerald-900/10 flex flex-col md:flex-row items-center gap-6 justify-between shadow-xl">
                     <div className="space-y-2">
-                      <h3 className="text-md font-bold text-emerald-950 flex items-center gap-2">
-                        <CookingPot className="h-5 w-5 text-emerald-700" />
+                      <h3 className="text-sm font-black text-white flex items-center gap-2">
+                        <CookingPot className="h-5 w-5 text-emerald-450 text-emerald-400" />
                         Did you know?
                       </h3>
-                      <p className="text-sm text-emerald-900/80 leading-relaxed max-w-xl font-medium">
+                      <p className="text-xs text-stone-400 leading-relaxed max-w-xl font-bold">
                         Almost <strong>40% of all food</strong> gets thrown away at home in the US. Wasted meat
                         generates roughly <strong>9 times</strong> the greenhouse gas emissions per pound than
                         wasted produce due to resources required in animal farming! Learn shelf-saving techniques
-                        instantly.
+                        instantly from your dedicated AI advisor.
                       </p>
                     </div>
                     <button
                       onClick={() => setActiveTab("advisor")}
-                      className="shrink-0 bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-sm px-5 py-3 rounded-xl flex items-center gap-2 shadow-sm shadow-emerald-900/20 transition-all duration-200 cursor-pointer"
+                      className="shrink-0 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase tracking-wider px-5 py-3 rounded-xl flex items-center gap-2 shadow-lg shadow-emerald-950/20 border border-emerald-500/20 hover:border-emerald-400 transition-all duration-200 cursor-pointer h-11"
                     >
-                      <Sparkle className="h-4 w-4" />
+                      <Sparkles className="h-4 w-4" />
                       Ask AI Advisor
                       <ChevronRight className="h-4 w-4" />
                     </button>
@@ -328,7 +394,9 @@ export default function Home() {
                 </div>
 
                 {/* Column C (1/3 width) - Form Input Panel */}
-                <WasteForm onAddLog={handleAddLog} />
+                <div className="w-full">
+                  <WasteForm onAddLog={handleAddLog} />
+                </div>
               </div>
 
               {/* Dynamic Interactive LOGS TABLE */}
@@ -360,9 +428,9 @@ export default function Home() {
       </main>
 
       {/* Sustainable footer summary */}
-      <footer className="max-w-7xl mx-auto px-6 py-8 border-t border-stone-200/50 text-center text-xs text-stone-400 font-bold space-y-1 mt-12 bg-white rounded-t-3xl w-full">
-        <p>Foodlytics Dashboard Application — Cultivating ecological mindfulness one home kitchen at a time.</p>
-        <p className="text-stone-300 font-semibold">Calculations based on USDA and FAO household wastage benchmarks.</p>
+      <footer className="max-w-7xl mx-auto px-6 py-6 border-t border-white/5 text-center text-[10px] text-stone-500 font-bold space-y-1 mt-16 rounded-t-3xl w-full select-none bg-black/10">
+        <p>Foodlytics Ecological Analytics Platform — Cultivating ecological mindfulness one home kitchen at a time.</p>
+        <p className="text-stone-600">Calculations based on standard USDA agricultural flow models and FAO food wastage coefficients.</p>
       </footer>
     </div>
   );
