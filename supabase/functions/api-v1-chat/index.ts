@@ -1,4 +1,4 @@
-// filename: supabase/functions/gemini-chat/index.ts
+// filename: supabase/functions/api-v1-chat/index.ts
 // purpose: Grounded RAG Chat Edge Function using Gemini 3.5 Flash & pgvector semantic search
 // dependencies: Supabase JS SDK, Deno std/http
 // brief_section: Section 7 - AI Layer Architecture & Section 8 - Educational Chat Page
@@ -203,7 +203,7 @@ ${JSON.stringify((matchData || []).map((chunk: any) => ({ source_doc: chunk.sour
     })
 
   } catch (error: any) {
-    console.error("gemini-chat edge function error:", error)
+    console.error("api-v1-chat edge function error:", error)
     return new Response(
       JSON.stringify({ error: error.message || "An unexpected error occurred during your request." }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

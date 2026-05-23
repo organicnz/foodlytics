@@ -1,4 +1,4 @@
-// filename: supabase/functions/embed-document/index.ts
+// filename: supabase/functions/api-v1-embed-document/index.ts
 // purpose: Text chunk document embedding ingest function using Gemini text-embedding-004 & pgvector store
 // dependencies: Supabase JS SDK, Deno std/http
 // brief_section: Section 7 - AI Layer Architecture & Section 9 - Ingestion Pipeline
@@ -106,7 +106,7 @@ serve(async (req) => {
     )
 
   } catch (error: any) {
-    console.error("embed-document edge function error:", error)
+    console.error("api-v1-embed-document edge function error:", error)
     return new Response(
       JSON.stringify({ error: error.message || "An unexpected error occurred during document chunk indexing." }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

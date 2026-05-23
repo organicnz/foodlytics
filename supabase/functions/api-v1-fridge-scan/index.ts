@@ -1,4 +1,4 @@
-// filename: supabase/functions/gemini-fridge-scan/index.ts
+// filename: supabase/functions/api-v1-fridge-scan/index.ts
 // purpose: Multimodal visual fridge scan and item prediction using Gemini Omni Flash
 // dependencies: Supabase JS SDK, Deno std/http
 // brief_section: Section 13 - Gap-Closing Addition 1 - Gemini Omni Fridge Scan
@@ -162,7 +162,7 @@ You must return a raw JSON object ONLY. No markdown wrap, no backticks, no text 
     )
 
   } catch (error: any) {
-    console.error("gemini-fridge-scan edge function error:", error)
+    console.error("api-v1-fridge-scan edge function error:", error)
     return new Response(
       JSON.stringify({ error: error.message || "An unexpected error occurred during image processing." }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -1,4 +1,4 @@
-// filename: supabase/functions/gemini-brief/index.ts
+// filename: supabase/functions/api-v1-brief/index.ts
 // purpose: Structured corrective brief generator using Gemini 3.5 Flash for underperforming interventions
 // dependencies: Supabase JS SDK, Deno std/http
 // brief_section: Section 14 - Gap-Closing Addition 2 - Antigravity 2.0 Two-Agent Monitoring Loop
@@ -182,7 +182,7 @@ Include an amber warning alert block if the overall ratio of cumulative actuals 
     )
 
   } catch (error: any) {
-    console.error("gemini-brief edge function error:", error)
+    console.error("api-v1-brief edge function error:", error)
     return new Response(
       JSON.stringify({ error: error.message || "An unexpected error occurred during brief generation." }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

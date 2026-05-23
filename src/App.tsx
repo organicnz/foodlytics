@@ -194,8 +194,8 @@ export default function App() {
     setApiWarning(null);
 
     try {
-      // Invoke deployed cloud Edge Function "gemini-chat"
-      const { data, error } = await supabase.functions.invoke("gemini-chat", {
+      // Invoke deployed cloud Edge Function "api-v1-chat"
+      const { data, error } = await supabase.functions.invoke("api-v1-chat", {
         body: { query: textToSend }
       });
 
