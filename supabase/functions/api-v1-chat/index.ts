@@ -30,7 +30,7 @@ serve(async (req) => {
       )
     }
 
-    const { query, region, history } = await req.json()
+    const { query, region, history, stream } = await req.json()
 
     if (!query) {
       return new Response(
@@ -44,15 +44,16 @@ serve(async (req) => {
 
     // 2. Generate vector embedding for the query using Gemini Text Embedding model
     const embedResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'models/text-embedding-004',
+          model: 'models/gemini-embedding-001',
           content: {
             parts: [{ text: query }]
-          }
+          },
+          outputDimensionality: 1536
         })
       }
     )
@@ -82,6 +83,17 @@ serve(async (req) => {
       throw new Error(`Database error during semantic matching: ${matchError.message}`)
     }
 
+    // 3.5 Fetch latest household waste logs to ground the advisor in the user's actual data
+    const { data: logsData, error: logsError } = await supabase
+      .from("household_waste_logs")
+      .select("*")
+      .order("discard_date", { ascending: false })
+      .limit(100)
+
+    const logsContext = (logsData && logsData.length > 0)
+      ? logsData.map(log => `- ${log.food_name} (${log.category}): ${log.weight_lbs} lbs, $${log.cost_usd}, discarded on ${log.discard_date} due to ${log.reason}. CO2 penalty: ${log.co2_impact_lbs} lbs, Water penalty: ${log.water_impact_gal} gal.`).join('\n')
+      : "No household waste logs have been recorded yet."
+
     // 4. Construct System Grounding Prompt
     const groundingContext = (matchData && matchData.length > 0)
       ? matchData.map((chunk: any) => `[Doc: ${chunk.source_doc}, Chunk: ${chunk.chunk_id}] ${chunk.content}`).join('\n\n')
@@ -95,6 +107,11 @@ Active Region Scope: ${activeRegion}
 
 Verified Grounding Data:
 ${groundingContext}
+
+Active Household Waste Logs:
+${logsContext}
+
+Use the user's household waste logs to answer specific questions about their own food waste history, habits, cost, and ecological impact if they ask! Provide shelf-saving hacks, cooking tips, or zero-waste recipes for items they are wasting or have already wasted!
 
 Cite your sources inline in the text using [DocName, ChunkID]. Keep your answer highly analytical, precise, and professional. Avoid superlatives.
 At the very end of your response, output a structured JSON block containing the exact cited source metadata for the client to render citations:
@@ -122,85 +139,120 @@ ${JSON.stringify((matchData || []).map((chunk: any) => ({ source_doc: chunk.sour
       parts: [{ text: query }]
     })
 
-    // 6. Request streaming response from Gemini 3.5 Flash
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:streamGenerateContent?alt=sse&key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: formattedContents,
-          systemInstruction: {
-            parts: [{ text: systemInstruction }]
-          },
-          generationConfig: {
-            temperature: 0.15,
-            topP: 0.95,
-            maxOutputTokens: 2048
-          }
-        })
+    // 6. Request streaming or single response from Gemini 3.5 Flash
+    if (stream === true) {
+      const geminiResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:streamGenerateContent?alt=sse&key=${GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: formattedContents,
+            systemInstruction: {
+              parts: [{ text: systemInstruction }]
+            },
+            generationConfig: {
+              temperature: 0.15,
+              topP: 0.95,
+              maxOutputTokens: 2048
+            }
+          })
+        }
+      )
+
+      if (!geminiResponse.ok) {
+        const geminiErr = await geminiResponse.text()
+        throw new Error(`Gemini Stream Generation failed: ${geminiErr}`)
       }
-    )
 
-    if (!geminiResponse.ok) {
-      const geminiErr = await geminiResponse.text()
-      throw new Error(`Gemini Stream Generation failed: ${geminiErr}`)
-    }
+      // Stream response chunks directly to client
+      const { readable, writable } = new TransformStream()
+      const writer = writable.getWriter()
+      const reader = geminiResponse.body?.getReader()
+      const encoder = new TextEncoder()
+      const decoder = new TextDecoder()
 
-    // 7. Stream response chunks directly to client
-    const { readable, writable } = new TransformStream()
-    const writer = writable.getWriter()
-    const reader = geminiResponse.body?.getReader()
-    const encoder = new TextEncoder()
-    const decoder = new TextDecoder()
+      if (!reader) {
+        throw new Error("Response body is not readable.")
+      }
 
-    if (!reader) {
-      throw new Error("Response body is not readable.")
-    }
+      // Run async loop to read and stream chunks without blocking
+      (async () => {
+        try {
+          let buffer = ""
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
 
-    // Run async loop to read and stream chunks without blocking
-    (async () => {
-      try {
-        let buffer = ""
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
+            buffer += decoder.decode(value, { stream: true })
+            const lines = buffer.split('\n')
+            buffer = lines.pop() ?? ""
 
-          buffer += decoder.decode(value, { stream: true })
-          const lines = buffer.split('\n')
-          buffer = lines.pop() ?? ""
-
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const dataStr = line.slice(6).trim()
-              if (dataStr === '[DONE]') continue
-              try {
-                const parsed = JSON.parse(dataStr)
-                const textChunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text
-                if (textChunk) {
-                  await writer.write(encoder.encode(textChunk))
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const dataStr = line.slice(6).trim()
+                if (dataStr === '[DONE]') continue
+                try {
+                  const parsed = JSON.parse(dataStr)
+                  const textChunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text
+                  if (textChunk) {
+                    await writer.write(encoder.encode(textChunk))
+                  }
+                } catch {
+                  // Ignore parsing errors for empty or framing chunks
                 }
-              } catch {
-                // Ignore parsing errors for empty or framing chunks
               }
             }
           }
+          await writer.close()
+        } catch (err) {
+          console.error("Stream pipe error:", err)
+          await writer.abort(err)
         }
-        await writer.close()
-      } catch (err) {
-        console.error("Stream pipe error:", err)
-        await writer.abort(err)
-      }
-    })()
+      })()
 
-    return new Response(readable, {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
+      return new Response(readable, {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        }
+      })
+    } else {
+      // Standard non-streaming JSON response (Default)
+      const geminiResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: formattedContents,
+            systemInstruction: {
+              parts: [{ text: systemInstruction }]
+            },
+            generationConfig: {
+              temperature: 0.15,
+              topP: 0.95,
+              maxOutputTokens: 2048
+            }
+          })
+        }
+      )
+
+      if (!geminiResponse.ok) {
+        const geminiErr = await geminiResponse.text()
+        throw new Error(`Gemini Generation failed: ${geminiErr}`)
       }
-    })
+
+      const geminiJson = await geminiResponse.json()
+      const replyText = geminiJson.candidates?.[0]?.content?.parts?.[0]?.text || "No response received."
+
+      return new Response(
+        JSON.stringify({ reply: replyText }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
 
   } catch (error: any) {
     console.error("api-v1-chat edge function error:", error)

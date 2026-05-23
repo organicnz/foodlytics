@@ -174,15 +174,52 @@ export function AdvisorChat({
                   msg.role === "user" ? "ml-auto items-end" : "mr-auto items-start"
                 }`}
               >
-                <div
-                  className={`p-4 rounded-2xl text-sm leading-relaxed shadow-sm border ${
-                    msg.role === "user"
-                      ? "bg-emerald-600/25 border-emerald-500/30 text-emerald-250 text-stone-100 rounded-br-none font-bold"
-                      : "bg-white/[0.03] border-white/5 text-stone-250 text-stone-200 rounded-bl-none font-semibold"
-                  }`}
-                >
-                  <div className="whitespace-pre-line space-y-2">{msg.text}</div>
-                </div>
+                {(() => {
+                  let cleanText = msg.text;
+                  let sourcesList: Array<{ source_doc: string; chunk_id: string }> = [];
+
+                  const sourcesMatch = msg.text.match(/```sources\n([\s\S]*?)\n```/);
+                  if (sourcesMatch) {
+                    try {
+                      sourcesList = JSON.parse(sourcesMatch[1]);
+                      cleanText = msg.text.replace(/```sources\n[\s\S]*?\n```/, "").trim();
+                    } catch (e) {
+                      // ignore parse error
+                    }
+                  }
+
+                  return (
+                    <>
+                      <div
+                        className={`p-4 rounded-2xl text-sm leading-relaxed shadow-sm border ${
+                          msg.role === "user"
+                            ? "bg-emerald-600/25 border-emerald-500/30 text-emerald-250 text-stone-100 rounded-br-none font-bold"
+                            : "bg-white/[0.03] border-white/5 text-stone-250 text-stone-200 rounded-bl-none font-semibold"
+                        }`}
+                      >
+                        <div className="whitespace-pre-line space-y-2">{cleanText}</div>
+
+                        {/* Citations block */}
+                        {sourcesList.length > 0 && (
+                          <div className="mt-3.5 pt-2.5 border-t border-white/5 space-y-1.5 text-[10px]">
+                            <span className="text-stone-500 font-bold uppercase tracking-wider block">Grounded Citations:</span>
+                            <div className="flex flex-wrap gap-2">
+                              {sourcesList.map((src, sIdx) => (
+                                <span 
+                                  key={sIdx}
+                                  title={`Document: ${src.source_doc} // Chunk: ${src.chunk_id}`}
+                                  className="px-2 py-0.5 bg-white/5 border border-white/10 hover:border-emerald-500/20 text-stone-400 hover:text-white rounded-lg cursor-help transition-all flex items-center gap-1 font-mono font-bold"
+                                >
+                                  📄 {src.source_doc.replace('ZeroWaste_', '').replace('.txt', '')} ({src.chunk_id.replace('chunk_', 'C')})
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
                 <span className="text-[9px] text-stone-500 font-bold mt-1 px-1">{msg.timestamp}</span>
               </motion.div>
             ))}

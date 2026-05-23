@@ -49,17 +49,18 @@ serve(async (req) => {
     // 1. Initialize Supabase Service Role Client
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
-    // 2. Request 1536-dimensional vector representation from models/text-embedding-004
+    // 2. Request 1536-dimensional vector representation from models/gemini-embedding-001
     const embedResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'models/text-embedding-004',
+          model: 'models/gemini-embedding-001',
           content: {
             parts: [{ text: content }]
-          }
+          },
+          outputDimensionality: 1536
         })
       }
     )

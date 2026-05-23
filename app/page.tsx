@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Leaf, BarChart3, Sparkles, CookingPot, ChevronRight, Database, RotateCw } from "lucide-react";
+import { Leaf, BarChart3, Sparkles, CookingPot, ChevronRight, Database, RotateCw, Award, Zap, Camera } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { FoodCategory, WasteReason, CATEGORY_METRIC_MAP, WasteEntry, ChatMessage } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
@@ -10,10 +10,13 @@ import { WasteForm } from "@/components/waste-form";
 import { CategoryInsights } from "@/components/category-insights";
 import { LogsTable } from "@/components/logs-table";
 import { AdvisorChat } from "@/components/advisor-chat";
+import { CampaignTracker } from "@/components/campaign-tracker";
+import { PriorityQueue } from "@/components/priority-queue";
+import { FridgeScan } from "@/components/fridge-scan";
 
 export default function Home() {
   // Navigation
-  const [activeTab, setActiveTab] = useState<"dashboard" | "advisor">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "campaign" | "interventions" | "scan" | "advisor">("dashboard");
 
   // Dashboard state
   const [logs, setLogs] = useState<WasteEntry[]>([]);
@@ -296,29 +299,65 @@ export default function Home() {
           </div>
 
           {/* Navigation Control Unit */}
-          <div className="flex items-center bg-black/25 p-1 rounded-2xl border border-white/5 font-bold text-xs">
+          <div className="flex flex-wrap items-center bg-black/25 p-1 rounded-2xl border border-white/5 font-bold text-xs gap-1">
             <button
               id="tab-btn-dashboard"
               onClick={() => setActiveTab("dashboard")}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all duration-200 cursor-pointer ${
                 activeTab === "dashboard"
                   ? "bg-white/10 text-white border border-white/10 shadow-md"
-                  : "text-stone-450 text-stone-400 hover:text-white hover:bg-white/5 border border-transparent"
+                  : "text-stone-400 hover:text-white hover:bg-white/5 border border-transparent"
               }`}
             >
-              <BarChart3 className="h-4 w-4" />
+              <BarChart3 className="h-3.5 w-3.5" />
               Impact Dashboard
+            </button>
+            <button
+              id="tab-btn-campaign"
+              onClick={() => setActiveTab("campaign")}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all duration-200 cursor-pointer ${
+                activeTab === "campaign"
+                  ? "bg-white/10 text-white border border-white/10 shadow-md"
+                  : "text-stone-400 hover:text-white hover:bg-white/5 border border-transparent"
+              }`}
+            >
+              <Award className="h-3.5 w-3.5 text-emerald-400" />
+              50% Campaign
+            </button>
+            <button
+              id="tab-btn-interventions"
+              onClick={() => setActiveTab("interventions")}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all duration-200 cursor-pointer ${
+                activeTab === "interventions"
+                  ? "bg-white/10 text-white border border-white/10 shadow-md"
+                  : "text-stone-400 hover:text-white hover:bg-white/5 border border-transparent"
+              }`}
+            >
+              <Zap className="h-3.5 w-3.5 text-amber-400" />
+              Priority Queue
+            </button>
+            <button
+              id="tab-btn-scan"
+              onClick={() => setActiveTab("scan")}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all duration-200 cursor-pointer ${
+                activeTab === "scan"
+                  ? "bg-white/10 text-white border border-white/10 shadow-md"
+                  : "text-stone-400 hover:text-white hover:bg-white/5 border border-transparent"
+              }`}
+            >
+              <Camera className="h-3.5 w-3.5 text-emerald-400" />
+              Fridge Scan
             </button>
             <button
               id="tab-btn-advisor"
               onClick={() => setActiveTab("advisor")}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all duration-200 cursor-pointer ${
                 activeTab === "advisor"
                   ? "bg-white/10 text-white border border-white/10 shadow-md"
-                  : "text-stone-450 text-stone-400 hover:text-white hover:bg-white/5 border border-transparent"
+                  : "text-stone-400 hover:text-white hover:bg-white/5 border border-transparent"
               }`}
             >
-              <Sparkles className="h-4 w-4 text-emerald-400" />
+              <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
               AI Advisor
             </button>
           </div>
@@ -404,7 +443,46 @@ export default function Home() {
             </motion.div>
           )}
 
-          {/* TAB 2: AI EDUCATION ADVISOR */}
+          {/* TAB 2: CAMPAIGN TRACKER */}
+          {activeTab === "campaign" && (
+            <motion.div
+              key="campaign-view"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.25 }}
+            >
+              <CampaignTracker />
+            </motion.div>
+          )}
+
+          {/* TAB 3: PRIORITY INTERVENTION QUEUE */}
+          {activeTab === "interventions" && (
+            <motion.div
+              key="interventions-view"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.25 }}
+            >
+              <PriorityQueue />
+            </motion.div>
+          )}
+
+          {/* TAB 4: FRIDGE SCAN */}
+          {activeTab === "scan" && (
+            <motion.div
+              key="scan-view"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.25 }}
+            >
+              <FridgeScan />
+            </motion.div>
+          )}
+
+          {/* TAB 5: AI EDUCATION ADVISOR */}
           {activeTab === "advisor" && (
             <motion.div
               key="advisor-view"
