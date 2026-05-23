@@ -224,6 +224,63 @@ Format the output strictly as a single JSON object. Do not wrap it in markdown b
           }
         }
 
+        // Embed intervention as a text chunk into the vector store for RAG
+        const actualsForChunk = (parsedData.actuals || [])
+          .filter((a: any) => a.intervention_name === item.name)
+        const risksForChunk = (parsedData.risks || [])
+          .filter((r: any) => r.intervention_name === item.name)
+
+        const actualsText = actualsForChunk.length > 0
+          ? actualsForChunk.map((a: any) => `${a.period}: ${a.actual_reduction_tonnes}t actual vs ${a.projected_reduction_tonnes}t projected`).join('; ')
+          : 'No actuals recorded'
+
+        const risksText = risksForChunk.length > 0
+          ? risksForChunk.map((r: any) => `${r.description} (prob: ${r.probability}, impact: ${r.impact}). Mitigation: ${r.mitigation}`).join('; ')
+          : 'No risks recorded'
+
+        const chunkContent = [
+          `Intervention: ${item.name}.`,
+          `Stage: ${item.stage}. Region: ${item.region}.`,
+          `Projected reduction: ${item.projected_reduction_pct}%, ${item.projected_reduction_tonnes} tonnes.`,
+          `Effort: ${item.effort_level}. Urgency: ${item.urgency}. Status: ${item.status}. Target: ${item.target_date}.`,
+          `Actuals — ${actualsText}.`,
+          `Risks — ${risksText}.`
+        ].join(' ')
+
+        const embedRes = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${GEMINI_API_KEY}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: 'models/gemini-embedding-001',
+              content: { parts: [{ text: chunkContent }] },
+              outputDimensionality: 1536
+            })
+          }
+        )
+
+        if (embedRes.ok) {
+          const embedJson = await embedRes.json()
+          const vectorArray = embedJson.embedding?.values
+          if (vectorArray && Array.isArray(vectorArray) && vectorArray.length === 1536) {
+            const { error: embedError } = await supabase
+              .from('embeddings')
+              .insert({
+                content: chunkContent,
+                embedding: vectorArray,
+                source_doc: 'ingest-interventions',
+                chunk_id: `intervention::${dbIntervention.id}`,
+                metadata: { stage: item.stage, region: item.region, intervention_id: dbIntervention.id }
+              })
+            if (embedError) {
+              console.error(`Failed to store embedding for ${item.name}:`, embedError.message)
+            }
+          }
+        } else {
+          console.error(`Gemini embedding failed for ${item.name}:`, await embedRes.text())
+        }
+
       } catch (err: any) {
         console.error("Failed to ingest row item:", err.message)
         rowsFailedCount++
