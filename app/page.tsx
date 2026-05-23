@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Leaf, BarChart3, Sparkles, CookingPot, ChevronRight, Database, RotateCw, Award, Zap, Camera } from "lucide-react";
+import { Leaf, BarChart3, Sparkles, CookingPot, ChevronRight, Database, RotateCw, Award, Zap, Camera, Globe, Scale, DollarSign, Flame, Droplet, TrendingDown, Info, BarChart2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { FoodCategory, WasteReason, CATEGORY_METRIC_MAP, WasteEntry, ChatMessage } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
@@ -23,6 +23,10 @@ export default function Home() {
   const [logs, setLogs] = useState<WasteEntry[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(true);
   const [logsError, setLogsError] = useState<string | null>(null);
+
+  // US categories macro data state
+  const [usCategories, setUsCategories] = useState<any[]>([]);
+  const [isLoadingUsCategories, setIsLoadingUsCategories] = useState(true);
 
   // Live DB Sync Observer HUD states
   const [dbStatus, setDbStatus] = useState<"connected" | "syncing" | "error">("connected");
@@ -82,8 +86,28 @@ export default function Home() {
     }
   };
 
+  // Fetch US categories telemetry once on mount
+  const fetchUsCategories = async () => {
+    setIsLoadingUsCategories(true);
+    try {
+      const { data, error } = await supabase
+        .from("us_foodwaste_categories")
+        .select("*")
+        .order("waste_tonnes", { ascending: false });
+
+      if (!error && data) {
+        setUsCategories(data);
+      }
+    } catch (e) {
+      console.error("Failed to load US categories macro stats:", e);
+    } finally {
+      setIsLoadingUsCategories(false);
+    }
+  };
+
   useEffect(() => {
     fetchLogs();
+    fetchUsCategories();
   }, []);
 
   // Handle Form Submission directly to Supabase
@@ -395,8 +419,131 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.25 }}
-              className="space-y-8"
+              className="space-y-10"
             >
+              {/* Macro Section: Global Scale & US Nationwide Segments */}
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <h2 className="text-lg font-black text-white flex items-center gap-2">
+                    <Globe className="h-5 w-5 text-emerald-450 text-emerald-450 text-emerald-400 animate-spin-slow" />
+                    Global Scale & US Market Segments
+                  </h2>
+                  <p className="text-xs text-stone-400">
+                    Contrasting global agricultural food loss metrics against verified US nationwide market sector segmentations
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+                  {/* Left Panel (2/3 width) - Global Macro Benchmarks Bento */}
+                  <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Global Metric 1: Mass */}
+                    <div className="glass-panel hover:glass-panel-glow-amber hover:-translate-y-0.5 transition-all duration-300 rounded-2xl p-5 bg-stone-900/10 border border-white/5 flex items-center gap-4 cursor-default">
+                      <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20 shadow-inner shrink-0">
+                        <Scale className="h-6 w-6" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 block">Global Wasted Weight</span>
+                        <h3 className="text-xl font-extrabold text-white tracking-tight">1.3 Billion <span className="text-xs font-semibold text-stone-400">tonnes/yr</span></h3>
+                        <p className="text-[10px] text-stone-500 leading-normal font-bold">UNEP Food Waste Index findings</p>
+                      </div>
+                    </div>
+
+                    {/* Global Metric 2: Financial */}
+                    <div className="glass-panel hover:glass-panel-glow-rose hover:-translate-y-0.5 transition-all duration-300 rounded-2xl p-5 bg-stone-900/10 border border-white/5 flex items-center gap-4 cursor-default">
+                      <div className="p-3 bg-rose-500/10 text-rose-400 rounded-xl border border-rose-500/20 shadow-inner shrink-0">
+                        <DollarSign className="h-6 w-6" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-rose-300 block">Global Economic Loss</span>
+                        <h3 className="text-xl font-extrabold text-white tracking-tight">$1.0 Trillion <span className="text-xs font-semibold text-stone-400">USD/yr</span></h3>
+                        <p className="text-[10px] text-stone-500 leading-normal font-bold">FAO capital burden calculation</p>
+                      </div>
+                    </div>
+
+                    {/* Global Metric 3: Carbon Impact */}
+                    <div className="glass-panel hover:glass-panel-glow-emerald hover:-translate-y-0.5 transition-all duration-300 rounded-2xl p-5 bg-stone-900/10 border border-white/5 flex items-center gap-4 cursor-default">
+                      <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20 shadow-inner shrink-0">
+                        <Flame className="h-6 w-6" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 block">Global Ecological Penalty</span>
+                        <h3 className="text-xl font-extrabold text-white tracking-tight">3.3 Billion <span className="text-xs font-semibold text-stone-400">tons CO2e</span></h3>
+                        <p className="text-[10px] text-stone-500 leading-normal font-bold">Accounts for 8-10% of global GHGs</p>
+                      </div>
+                    </div>
+
+                    {/* Global Metric 4: Water Impact */}
+                    <div className="glass-panel hover:glass-panel-glow-sky hover:-translate-y-0.5 transition-all duration-300 rounded-2xl p-5 bg-stone-900/10 border border-white/5 flex items-center gap-4 cursor-default">
+                      <div className="p-3 bg-sky-500/10 text-sky-400 rounded-xl border border-sky-500/20 shadow-inner shrink-0">
+                        <Droplet className="h-6 w-6" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-sky-300 block">Global Freshwater Waste</span>
+                        <h3 className="text-xl font-extrabold text-white tracking-tight">250 Cubic Km <span className="text-xs font-semibold text-stone-400">/yr</span></h3>
+                        <p className="text-[10px] text-stone-500 leading-normal font-bold">3 times the volume of Lake Geneva</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Panel (1/3 width) - US Market Segments Visual List */}
+                  <div className="glass-panel border-none rounded-2xl p-5 bg-black/15 border border-white/5 flex flex-col justify-between space-y-4">
+                    <div className="space-y-3.5">
+                      <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                        <h4 className="text-[10px] font-black text-white uppercase tracking-wider">US Market Segmentation</h4>
+                        <span className="text-[9px] text-emerald-400 font-extrabold">Active Baseline</span>
+                      </div>
+
+                      <div className="space-y-2.5">
+                        {isLoadingUsCategories ? (
+                          <div className="flex items-center justify-center py-6 gap-2 text-stone-500 text-[10px] font-bold">
+                            <RotateCw className="h-3 w-3 animate-spin text-emerald-400" />
+                            Loading US categories...
+                          </div>
+                        ) : usCategories.slice(0, 4).map((c) => (
+                          <div key={c.id} className="space-y-1 text-[10px] font-bold">
+                            <div className="flex justify-between text-stone-300">
+                              <span className="truncate pr-2">{c.category.split(" (")[0]}</span>
+                              <span className="text-white font-mono">{(Number(c.waste_tonnes) / 1000000).toFixed(1)}M tons ({c.waste_pct}%)</span>
+                            </div>
+                            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden p-[1px]">
+                              <div 
+                                style={{ width: `${c.waste_pct * 2.5}%` }} 
+                                className={`h-full rounded-full bg-gradient-to-r ${
+                                  c.category.includes('Produce') ? 'from-emerald-650/40 to-emerald-500/70 shadow-emerald-500/20' :
+                                  c.category.includes('Prepared') ? 'from-purple-650/40 to-purple-500/70 shadow-purple-500/20' :
+                                  c.category.includes('Dairy') ? 'from-amber-650/40 to-amber-500/70 shadow-amber-500/20' :
+                                  c.category.includes('Beverages') ? 'from-sky-650/40 to-sky-500/70 shadow-sky-500/20' :
+                                  'from-stone-600/40 to-stone-400/70 shadow-stone-500/20'
+                                }`}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <button 
+                      onClick={() => setActiveTab("us-waste")}
+                      className="w-full py-2 border border-white/5 hover:border-emerald-500/30 bg-white/[0.01] hover:bg-emerald-600/10 text-[9px] font-black uppercase tracking-widest text-stone-300 hover:text-white rounded-xl transition duration-200 flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <BarChart2 className="h-3 w-3 text-emerald-400" />
+                      Explore All US Segments
+                      <ChevronRight className="h-3 w-3 shrink-0" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Local Footprint Divider Section */}
+              <div className="relative py-1 flex items-center">
+                <div className="flex-grow border-t border-white/5"></div>
+                <span className="flex-shrink mx-4 text-[10px] font-black uppercase tracking-widest text-emerald-400 flex items-center gap-1.5 bg-black/10 px-4 py-1.5 rounded-full border border-white/5 select-none">
+                  <Leaf className="h-3.5 w-3.5" />
+                  Your Household Footprint
+                </span>
+                <div className="flex-grow border-t border-white/5"></div>
+              </div>
+
               {/* Highlight Stats Strip (Bento-grid like structure) */}
               <BentoStats
                 totalCost={totalCost}
