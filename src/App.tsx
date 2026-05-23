@@ -74,7 +74,7 @@ export default function App() {
   const fetchLogs = async () => {
     setIsLoadingLogs(true);
     try {
-      const response = await fetch("/api/v1/logs");
+      const response = await fetch("/api-v1-logs");
       if (!response.ok) {
         throw new Error("Failed to load your food waste data.");
       }
@@ -99,7 +99,7 @@ export default function App() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch("/api/v1/logs", {
+      const response = await fetch("/api-v1-logs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -134,7 +134,7 @@ export default function App() {
   // Handle Log Deletion
   const handleDeleteLog = async (id: string) => {
     try {
-      const response = await fetch(`/api/v1/logs/${id}`, {
+      const response = await fetch(`/api-v1-logs/${id}`, {
         method: "DELETE"
       });
       if (!response.ok) {
@@ -163,7 +163,7 @@ export default function App() {
     setApiWarning(null);
 
     try {
-      const response = await fetch("/api/v1/chat", {
+      const response = await fetch("/api-v1-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: textToSend })

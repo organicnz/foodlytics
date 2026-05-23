@@ -101,12 +101,12 @@ function getGeminiClient(): GoogleGenAI {
 // REST API Endpoints
 
 // GET v1 logs
-app.get("/api/v1/logs", (req, res) => {
+app.get("/api-v1-logs", (req, res) => {
   res.json(loggedWaste);
 });
 
 // POST v1 logs
-app.post("/api/v1/logs", (req, res) => {
+app.post("/api-v1-logs", (req, res) => {
   try {
     const { foodName, category, weight, cost, date, reason } = req.body;
 
@@ -141,7 +141,7 @@ app.post("/api/v1/logs", (req, res) => {
 });
 
 // DELETE v1 logs
-app.delete("/api/v1/logs/:id", (req, res) => {
+app.delete("/api-v1-logs/:id", (req, res) => {
   const { id } = req.params;
   const initialLength = loggedWaste.length;
   loggedWaste = loggedWaste.filter(item => item.id !== id);
@@ -154,7 +154,7 @@ app.delete("/api/v1/logs/:id", (req, res) => {
 });
 
 // GET US Food Waste Analytics with Gemini Insights
-app.get("/api/v1/us-waste-analytics", async (req, res) => {
+app.get("/api-v1-us-waste-analytics", async (req, res) => {
   try {
     const ai = getGeminiClient();
     const systemInstruction = 
@@ -216,7 +216,7 @@ app.get("/api/v1/us-waste-analytics", async (req, res) => {
 });
 
 // POST Grounded RAG Chat utilizing pgvector
-app.post("/api/v1/chat", async (req, res) => {
+app.post("/api-v1-chat", async (req, res) => {
   try {
     const { message, region, history } = req.body;
     if (!message) {
@@ -286,7 +286,7 @@ app.post("/api/v1/chat", async (req, res) => {
 });
 
 // POST Multimodal Vision Fridge Scan prediction
-app.post("/api/v1/fridge-scan", async (req, res) => {
+app.post("/api-v1-fridge-scan", async (req, res) => {
   try {
     const { image, user_id } = req.body;
     if (!image) {
@@ -391,7 +391,7 @@ You must return a raw JSON object ONLY. No markdown wrap, no backticks, no text 
 });
 
 // POST Operational Corrective Brief Generator
-app.post("/api/v1/brief", async (req, res) => {
+app.post("/api-v1-brief", async (req, res) => {
   try {
     const { intervention_id, trigger_reason } = req.body;
     if (!intervention_id) {
