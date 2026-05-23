@@ -370,22 +370,33 @@ Include an amber warning alert block if the overall ratio of cumulative actuals 
     if (refresh === true) {
       logs.push("🔍 [" + new Date().toISOString() + "] Crawling USDA & ReFED national food waste databases...")
       
-      const systemInstruction = `You are a food waste data analyst bot. Your job is to return the absolute latest United States nationwide food waste breakdown by category in a strict JSON array format.
-Use USDA, EPA, and ReFED 2025/2026 data.
-You MUST output ONLY a raw JSON array. Do not include markdown code block syntax (like \`\`\`json) or any other text before or after the JSON.
-The JSON array must contain exactly these properties:
-- category (string, must be one of: 'Produce (Fruits & Vegetables)', 'Prepared Foods & Mixed Dishes', 'Dairy & Eggs', 'Beverages', 'Bakery Products', 'Grains (Rice, Pasta, etc.)', 'Meat & Poultry', 'Seafood & Fish')
-- waste_tonnes (number, e.g. 24100000 for Produce)
-- waste_pct (number, e.g. 28.45)
-- cost_usd_billions (number, e.g. 48.2)
-- co2_impact_million_tonnes (number, e.g. 18.5)
+      const systemInstruction = `You are an expert food waste telemetry analyst. Your job is to return the absolute latest United States nationwide food waste breakdown by category in a strict JSON array format.
+You must ground your answers in verified USDA, EPA, and ReFED 2025/2026 data.
+
+Your output MUST be ONLY a raw JSON array. Do not include markdown code block syntax (like \`\`\`json) or any other text before or after the JSON.
+The JSON array must contain exactly these 8 categories and adhere to this schema:
+- category (string, must be EXACTLY one of:
+    1. 'Produce (Fruits & Vegetables)'
+    2. 'Prepared Foods & Mixed Dishes'
+    3. 'Dairy & Eggs'
+    4. 'Beverages'
+    5. 'Bakery Products'
+    6. 'Grains (Rice, Pasta, etc.)'
+    7. 'Meat & Poultry'
+    8. 'Seafood & Fish'
+  )
+- waste_tonnes (number of absolute tonnes, e.g. 24100000 for Produce)
+- waste_pct (number matching the category's percentage of total tonnes. Ensure all 8 category percentages sum up to exactly 100.0%)
+- cost_usd_billions (number representing financial value loss in billions USD, e.g. 48.2)
+- co2_impact_million_tonnes (number representing equivalent greenhouse gas emissions, e.g. 18.5)
 - source (string, e.g. 'ReFED 2026')
 
-Example format:
+Example payload format:
 [
   {"category": "Produce (Fruits & Vegetables)", "waste_tonnes": 24100000, "waste_pct": 28.45, "cost_usd_billions": 48.2, "co2_impact_million_tonnes": 18.5, "source": "ReFED 2026"}
 ]
-Order the array by waste_tonnes from highest to lowest. Ensure realistic numbers representing the total US market (around 80-95 million tonnes total).`
+
+Order the array by waste_tonnes in descending order (highest tonnage first). Ensure realistic numbers representing the total US market (around 80 to 95 million tonnes total). Ensure all numbers are highly consistent and accurate.`
 
       const geminiResponse = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${GEMINI_API_KEY}`,
@@ -393,12 +404,12 @@ Order the array by waste_tonnes from highest to lowest. Ensure realistic numbers
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: "Retrieve latest US nationwide food waste metrics by category." }] }],
+            contents: [{ role: 'user', parts: [{ text: "Compile the latest US nationwide food waste metrics by category." }] }],
             systemInstruction: {
               parts: [{ text: systemInstruction }]
             },
             generationConfig: {
-              temperature: 0.1,
+              temperature: 0.05,
               responseMimeType: "application/json"
             }
           })
@@ -412,37 +423,74 @@ Order the array by waste_tonnes from highest to lowest. Ensure realistic numbers
         logs.push("🔄 [" + new Date().toISOString() + "] Falling back to pre-seeded database cached values.")
       } else {
         const geminiJson = await geminiResponse.json()
-        const rawText = geminiJson.candidates?.[0]?.content?.parts?.[0]?.text || "[]"
+        let rawText = geminiJson.candidates?.[0]?.content?.parts?.[0]?.text || "[]"
         
         logs.push("📂 [" + new Date().toISOString() + "] Extracting and parsing telemetry payload...")
         try {
-          categoriesData = JSON.parse(rawText.trim())
+          // Robust markdown block stripping in case the model ignored raw output directives
+          let cleanText = rawText.trim()
+          if (cleanText.startsWith("```")) {
+            cleanText = cleanText.replace(/^```json\s*/, "").replace(/```\s*$/, "").trim()
+          }
+          categoriesData = JSON.parse(cleanText)
         } catch (parseErr: any) {
           logs.push("❌ [" + new Date().toISOString() + "] JSON parsing failed: " + parseErr.message)
         }
       }
 
       if (Array.isArray(categoriesData) && categoriesData.length > 0) {
-        logs.push("💾 [" + new Date().toISOString() + "] Updating cached records in Supabase database...")
+        logs.push("💾 [" + new Date().toISOString() + "] Validating and updating cached records in Supabase...")
         
+        const validCategories = [
+          'Produce (Fruits & Vegetables)',
+          'Prepared Foods & Mixed Dishes',
+          'Dairy & Eggs',
+          'Beverages',
+          'Bakery Products',
+          'Grains (Rice, Pasta, etc.)',
+          'Meat & Poultry',
+          'Seafood & Fish'
+        ]
+
+        let updatedCount = 0;
         for (const item of categoriesData) {
+          // Strict Category Validation
+          if (!validCategories.includes(item.category)) {
+            logs.push(`⚠️ [" + new Date().toISOString() + "] Skipping invalid category: ${item.category}`)
+            continue
+          }
+
+          // Strict type casting and sanitization matching our decimal/numeric database schemas
+          const waste_tonnes = Number(item.waste_tonnes)
+          const waste_pct = Number(item.waste_pct)
+          const cost_usd_billions = item.cost_usd_billions ? Number(item.cost_usd_billions) : null
+          const co2_impact_million_tonnes = item.co2_impact_million_tonnes ? Number(item.co2_impact_million_tonnes) : null
+          const source = item.source ? String(item.source) : 'ReFED'
+
+          if (isNaN(waste_tonnes) || isNaN(waste_pct)) {
+            logs.push(`⚠️ [" + new Date().toISOString() + "] Invalid numeric parameters for category: ${item.category}`)
+            continue
+          }
+
           const { error: upsertErr } = await supabase
             .from('us_foodwaste_categories')
             .upsert({
               category: item.category,
-              waste_tonnes: item.waste_tonnes,
-              waste_pct: item.waste_pct,
-              cost_usd_billions: item.cost_usd_billions,
-              co2_impact_million_tonnes: item.co2_impact_million_tonnes,
-              source: item.source,
+              waste_tonnes,
+              waste_pct,
+              cost_usd_billions,
+              co2_impact_million_tonnes,
+              source,
               last_updated_at: new Date().toISOString()
             }, { onConflict: 'category' })
 
           if (upsertErr) {
-            logs.push("⚠️ [" + new Date().toISOString() + "] Failed to upsert " + item.category + ": " + upsertErr.message)
+            logs.push(`⚠️ [" + new Date().toISOString() + "] Failed to upsert ${item.category}: ${upsertErr.message}`)
+          } else {
+            updatedCount++
           }
         }
-        logs.push("✅ [" + new Date().toISOString() + "] Telemetry update complete. Database cache synced!")
+        logs.push(`✅ [" + new Date().toISOString() + "] Telemetry update complete. Database cache synced! (${updatedCount} rows processed)`)
       } else {
         logs.push("⚠️ [" + new Date().toISOString() + "] Received empty or invalid category data from Gemini.")
       }
