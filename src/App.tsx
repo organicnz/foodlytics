@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import React, { useState, useEffect } from "react";
 import { 
   Leaf, 
@@ -21,6 +22,7 @@ import {
   HelpCircleIcon
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { createClient } from "@supabase/supabase-js";
 import { 
   WasteEntry, 
   FoodCategory, 
@@ -28,6 +30,11 @@ import {
   CATEGORY_METRIC_MAP, 
   ChatMessage 
 } from "./types";
+
+// Initialize client-side Supabase Client
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://blzsyikioefpnigzagxn.supabase.co";
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "sb_publishable_DnL6t56ttULJt9E9ygo7Wg_rs5c9BL2";
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function App() {
   // Navigation
@@ -70,19 +77,35 @@ export default function App() {
   // Active filter for table logs
   const [categoryFilter, setCategoryFilter] = useState<FoodCategory | 'all'>('all');
 
-  // Fetch initial logs from Express backend
+  // Fetch initial logs directly from Supabase Cloud
   const fetchLogs = async () => {
     setIsLoadingLogs(true);
     try {
-      const response = await fetch("/api-v1-logs");
-      if (!response.ok) {
-        throw new Error("Failed to load your food waste data.");
+      const { data, error } = await supabase
+        .from("household_waste_logs")
+        .select("*")
+        .order("discard_date", { ascending: false });
+
+      if (error) {
+        throw new Error(error.message);
       }
-      const data = await response.json();
-      setLogs(data);
+
+      const mappedData: WasteEntry[] = (data || []).map(item => ({
+        id: item.id,
+        foodName: item.food_name,
+        category: item.category as FoodCategory,
+        weight: Number(item.weight_lbs),
+        cost: Number(item.cost_usd),
+        date: item.discard_date,
+        reason: item.reason as WasteReason,
+        co2Impact: Number(item.co2_impact_lbs),
+        waterImpact: Math.round(item.water_impact_gal),
+      }));
+
+      setLogs(mappedData);
       setLogsError(null);
     } catch (err: any) {
-      setLogsError(err.message || "Could not connect to the database.");
+      setLogsError(err.message || "Could not connect to the Supabase database.");
     } finally {
       setIsLoadingLogs(false);
     }
@@ -92,28 +115,34 @@ export default function App() {
     fetchLogs();
   }, []);
 
-  // Handle Form Submission
+  // Handle Form Submission directly to Supabase
   const handleAddLog = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!foodName || !weight || !cost || !itemDate) return;
 
     setIsSubmitting(true);
     try {
-      const response = await fetch("/api-v1-logs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          foodName,
-          category,
-          weight: parseFloat(weight),
-          cost: parseFloat(cost),
-          date: itemDate,
-          reason
-        })
-      });
+      const parsedWeight = parseFloat(weight);
+      const parsedCost = parseFloat(cost);
+      const metrics = CATEGORY_METRIC_MAP[category];
+      const co2Val = Number((parsedWeight * metrics.co2PerLb).toFixed(1));
+      const waterVal = Math.round(parsedWeight * metrics.waterPerLb);
 
-      if (!response.ok) {
-        throw new Error("Failed to add entry.");
+      const { error } = await supabase
+        .from("household_waste_logs")
+        .insert({
+          food_name: String(foodName),
+          category: String(category),
+          weight_lbs: parsedWeight,
+          cost_usd: parsedCost,
+          discard_date: String(itemDate),
+          reason: String(reason),
+          co2_impact_lbs: co2Val,
+          water_impact_gal: waterVal
+        });
+
+      if (error) {
+        throw new Error(error.message);
       }
 
       await fetchLogs();
@@ -125,28 +154,30 @@ export default function App() {
       setFormSuccess(true);
       setTimeout(() => setFormSuccess(false), 3000);
     } catch (err: any) {
-      alert("Error saving your entry: " + err.message);
+      alert("Error saving your entry to Supabase: " + err.message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Handle Log Deletion
+  // Handle Log Deletion directly in Supabase
   const handleDeleteLog = async (id: string) => {
     try {
-      const response = await fetch(`/api-v1-logs/${id}`, {
-        method: "DELETE"
-      });
-      if (!response.ok) {
-        throw new Error("Could not delete item.");
+      const { error } = await supabase
+        .from("household_waste_logs")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        throw new Error(error.message);
       }
       await fetchLogs();
     } catch (err: any) {
-      alert(err.message);
+      alert("Error deleting entry from Supabase: " + err.message);
     }
   };
 
-  // Handle AI Chat Submission
+  // Handle AI Chat Submission directly to Supabase Edge Function
   const handleSendChatMessage = async (textToSend: string) => {
     if (!textToSend.trim() || isChatLoading) return;
 
@@ -163,26 +194,25 @@ export default function App() {
     setApiWarning(null);
 
     try {
-      const response = await fetch("/api-v1-chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: textToSend })
+      // Invoke deployed cloud Edge Function "gemini-chat"
+      const { data, error } = await supabase.functions.invoke("gemini-chat", {
+        body: { query: textToSend }
       });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to call the server agent.");
+      if (error) {
+        throw new Error(error.message);
       }
 
+      const replyText = typeof data === 'string' ? data : (data?.reply || data || "No response received.");
       const modelMsg: ChatMessage = {
         id: Math.random().toString(),
         role: 'model',
-        text: data.reply,
+        text: replyText,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setChatMessages(prev => [...prev, modelMsg]);
     } catch (err: any) {
-      setApiWarning(err.message || "An error occurred. Check your server settings or API Key.");
+      setApiWarning(err.message || "An error occurred calling the cloud Edge Function.");
     } finally {
       setIsChatLoading(false);
     }
