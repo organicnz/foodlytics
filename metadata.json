@@ -1,0 +1,6 @@
+{
+  "name": "Foodlytics",
+  "description": "An interactive dashboard for analyzing food waste with dynamic visualizations, coupled with an AI-powered educational advisor for food-saving tips and recipes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
