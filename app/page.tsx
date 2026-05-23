@@ -276,77 +276,80 @@ export default function Home() {
           </div>
 
           {/* Navigation Control Unit */}
-          <div className="flex flex-wrap items-center bg-black/25 p-1 rounded-2xl border border-white/5 font-bold text-xs gap-1">
+          <div 
+            style={{ scrollbarWidth: "none" }}
+            className="flex flex-nowrap overflow-x-auto md:flex-wrap items-center bg-black/25 p-1 rounded-2xl border border-white/5 font-bold text-xs gap-1.5 max-w-full [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          >
             <button
               id="tab-btn-dashboard"
               onClick={() => setActiveTab("dashboard")}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all duration-200 cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all duration-200 cursor-pointer shrink-0 ${
                 activeTab === "dashboard"
-                  ? "bg-white/10 text-white border border-white/10 shadow-md"
-                  : "text-stone-400 hover:text-white hover:bg-white/5 border border-transparent"
+                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-md shadow-emerald-950/25"
+                  : "text-stone-400 hover:text-stone-200 hover:bg-white/5 border border-transparent"
               }`}
             >
-              <BarChart3 className="h-3.5 w-3.5" />
+              <BarChart3 className={`h-3.5 w-3.5 transition-colors ${activeTab === "dashboard" ? "text-emerald-400" : "text-stone-500"}`} />
               Impact Dashboard
             </button>
             <button
               id="tab-btn-campaign"
               onClick={() => setActiveTab("campaign")}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all duration-200 cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all duration-200 cursor-pointer shrink-0 ${
                 activeTab === "campaign"
-                  ? "bg-white/10 text-white border border-white/10 shadow-md"
-                  : "text-stone-400 hover:text-white hover:bg-white/5 border border-transparent"
+                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-md shadow-emerald-950/25"
+                  : "text-stone-400 hover:text-stone-200 hover:bg-white/5 border border-transparent"
               }`}
             >
-              <Award className="h-3.5 w-3.5 text-emerald-400" />
+              <Award className={`h-3.5 w-3.5 transition-colors ${activeTab === "campaign" ? "text-emerald-400" : "text-stone-500"}`} />
               50% Campaign
             </button>
             <button
               id="tab-btn-interventions"
               onClick={() => setActiveTab("interventions")}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all duration-200 cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all duration-200 cursor-pointer shrink-0 ${
                 activeTab === "interventions"
-                  ? "bg-white/10 text-white border border-white/10 shadow-md"
-                  : "text-stone-400 hover:text-white hover:bg-white/5 border border-transparent"
+                  ? "bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-md shadow-amber-950/25"
+                  : "text-stone-400 hover:text-stone-200 hover:bg-white/5 border border-transparent"
               }`}
             >
-              <Zap className="h-3.5 w-3.5 text-amber-400" />
+              <Zap className={`h-3.5 w-3.5 transition-colors ${activeTab === "interventions" ? "text-amber-400" : "text-stone-500"}`} />
               Priority Queue
             </button>
             <button
               id="tab-btn-us-waste"
               onClick={() => setActiveTab("us-waste")}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all duration-200 cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all duration-200 cursor-pointer shrink-0 ${
                 activeTab === "us-waste"
-                  ? "bg-white/10 text-white border border-white/10 shadow-md"
-                  : "text-stone-400 hover:text-white hover:bg-white/5 border border-transparent"
+                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-md shadow-emerald-950/25"
+                  : "text-stone-400 hover:text-stone-200 hover:bg-white/5 border border-transparent"
               }`}
             >
-              <BarChart3 className="h-3.5 w-3.5 text-emerald-400" />
+              <BarChart3 className={`h-3.5 w-3.5 transition-colors ${activeTab === "us-waste" ? "text-emerald-400" : "text-stone-500"}`} />
               US Waste Tracker
             </button>
             <button
               id="tab-btn-scan"
               onClick={() => setActiveTab("scan")}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all duration-200 cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all duration-200 cursor-pointer shrink-0 ${
                 activeTab === "scan"
-                  ? "bg-white/10 text-white border border-white/10 shadow-md"
-                  : "text-stone-400 hover:text-white hover:bg-white/5 border border-transparent"
+                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-md shadow-emerald-950/25"
+                  : "text-stone-400 hover:text-stone-200 hover:bg-white/5 border border-transparent"
               }`}
             >
-              <Camera className="h-3.5 w-3.5 text-emerald-400" />
+              <Camera className={`h-3.5 w-3.5 transition-colors ${activeTab === "scan" ? "text-emerald-400" : "text-stone-500"}`} />
               Fridge Scan
             </button>
             <button
               id="tab-btn-advisor"
               onClick={() => setActiveTab("advisor")}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all duration-200 cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all duration-200 cursor-pointer shrink-0 ${
                 activeTab === "advisor"
-                  ? "bg-white/10 text-white border border-white/10 shadow-md"
-                  : "text-stone-400 hover:text-white hover:bg-white/5 border border-transparent"
+                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-md shadow-emerald-950/25"
+                  : "text-stone-400 hover:text-stone-200 hover:bg-white/5 border border-transparent"
               }`}
             >
-              <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
+              <Sparkles className={`h-3.5 w-3.5 transition-colors ${activeTab === "advisor" ? "text-emerald-400" : "text-stone-500"}`} />
               AI Advisor
             </button>
           </div>
@@ -386,7 +389,12 @@ export default function Home() {
                 </div>
 
                 {/* Colossal Hackathon Hero Row */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                >
                   {/* Global Economic Loss */}
                   <div className="glass-panel hover:glass-panel-glow-rose hover:-translate-y-1.5 transition-all duration-500 rounded-3xl p-8 bg-gradient-to-br from-rose-500/10 via-stone-900/40 to-stone-900/10 border border-rose-500/20 flex flex-col justify-between cursor-default relative overflow-hidden min-h-[220px]">
                     <div className="absolute -right-20 -bottom-20 w-60 h-60 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -446,10 +454,16 @@ export default function Home() {
                       <span>Equivalent to wasting 1/3 of all food produced for human consumption.</span>
                     </div>
                   </div>
-                </div>
+                </motion.div>
 
                 {/* Secondary global stats & US categories */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+                <motion.div 
+                  initial={{ opacity: 0, y: 50 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.7, delay: 0.1, ease: "easeOut" }}
+                  className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch"
+                >
                   <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* Global Metric 3: Carbon Impact */}
                     <div className="glass-panel hover:glass-panel-glow-emerald hover:-translate-y-1 transition-all duration-300 rounded-2xl p-6 sm:p-7 bg-stone-900/10 border border-white/5 flex items-center gap-5 cursor-default relative overflow-hidden">
@@ -528,7 +542,7 @@ export default function Home() {
                       <ChevronRight className="h-3 w-3 shrink-0" />
                     </button>
                   </div>
-                </div>
+                </motion.div>
               </div>
 
               {/* Local Footprint Divider Section */}
@@ -542,15 +556,28 @@ export default function Home() {
               </div>
 
               {/* Highlight Stats Strip (Bento-grid like structure) */}
-              <BentoStats
-                totalCost={totalCost}
-                totalWeight={totalWeight}
-                totalCO2={totalCO2}
-                totalWater={totalWater}
-              />
+              <motion.div
+                initial={{ opacity: 0, y: 50, scale: 0.98 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+              >
+                <BentoStats
+                  totalCost={totalCost}
+                  totalWeight={totalWeight}
+                  totalCO2={totalCO2}
+                  totalWater={totalWater}
+                />
+              </motion.div>
 
               {/* Grid 2: Core Analytics Visualizers & Add Form */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+              <motion.div 
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.7, ease: "easeOut" }}
+                className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start"
+              >
                 
                 {/* Column A & B (2/3 width) - Charts Panel */}
                 <div className="lg:col-span-2 space-y-6">
@@ -593,10 +620,17 @@ export default function Home() {
                 <div className="w-full">
                   <WasteForm onAddLog={handleAddLog} />
                 </div>
-              </div>
+              </motion.div>
 
               {/* Dynamic Interactive LOGS TABLE */}
-              <LogsTable logs={logs} onDeleteLog={handleDeleteLog} />
+              <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+              >
+                <LogsTable logs={logs} onDeleteLog={handleDeleteLog} />
+              </motion.div>
             </motion.div>
           )}
 
