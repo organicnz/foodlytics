@@ -422,10 +422,10 @@ export default function Home() {
               className="space-y-10"
             >
               {/* Macro Section: Global Scale & US Nationwide Segments */}
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div className="space-y-1">
                   <h2 className="text-lg font-black text-white flex items-center gap-2">
-                    <Globe className="h-5 w-5 text-emerald-450 text-emerald-450 text-emerald-400 animate-spin-slow" />
+                    <Globe className="h-5 w-5 text-emerald-400 animate-spin-slow" />
                     Global Scale & US Market Segments
                   </h2>
                   <p className="text-xs text-stone-400">
@@ -433,54 +433,99 @@ export default function Home() {
                   </p>
                 </div>
 
+                {/* Colossal Hackathon Hero Row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Global Wasted Weight */}
+                  <div className="glass-panel hover:glass-panel-glow-amber hover:-translate-y-1.5 transition-all duration-500 rounded-3xl p-8 bg-gradient-to-br from-amber-500/10 via-stone-900/40 to-stone-900/10 border border-amber-500/20 flex flex-col justify-between cursor-default relative overflow-hidden min-h-[220px]">
+                    <div className="absolute -right-20 -bottom-20 w-60 h-60 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+                    <div className="absolute -left-10 -top-10 w-40 h-40 bg-amber-600/5 rounded-full blur-2xl pointer-events-none" />
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3.5">
+                        <div className="p-3 bg-amber-500/20 text-amber-400 rounded-2xl border border-amber-500/30 shadow-lg shadow-amber-950/20 shrink-0 h-14 w-14 flex items-center justify-center animate-pulse">
+                          <Scale className="h-7 w-7" />
+                        </div>
+                        <div>
+                          <span className="text-xs font-black uppercase tracking-widest text-amber-300 block leading-tight">Global Wasted Weight</span>
+                          <span className="text-[10px] text-stone-500 font-extrabold uppercase tracking-wider block">UNEP Food Waste Index findings</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-8 mb-4">
+                      <h3 className="text-5xl sm:text-6xl md:text-7xl font-black text-amber-400 tracking-tighter leading-none flex flex-wrap items-baseline gap-x-3">
+                        <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-amber-300 bg-clip-text text-transparent filter drop-shadow-[0_0_30px_oklch(0.78_0.16_80_/_0.2)]">1.3 Billion</span>
+                        <span className="text-sm sm:text-base font-black text-stone-400 uppercase tracking-widest font-sans">tonnes/yr</span>
+                      </h3>
+                    </div>
+                    
+                    <div className="text-[10px] text-stone-500 font-bold uppercase tracking-wider flex items-center gap-1.5 mt-2">
+                      <Info className="h-3.5 w-3.5 text-amber-500/50 animate-bounce" />
+                      <span>Equivalent to wasting 1/3 of all food produced for human consumption.</span>
+                    </div>
+                  </div>
+
+                  {/* Global Economic Loss */}
+                  <div className="glass-panel hover:glass-panel-glow-rose hover:-translate-y-1.5 transition-all duration-500 rounded-3xl p-8 bg-gradient-to-br from-rose-500/10 via-stone-900/40 to-stone-900/10 border border-rose-500/20 flex flex-col justify-between cursor-default relative overflow-hidden min-h-[220px]">
+                    <div className="absolute -right-20 -bottom-20 w-60 h-60 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
+                    <div className="absolute -left-10 -top-10 w-40 h-40 bg-rose-600/5 rounded-full blur-2xl pointer-events-none" />
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3.5">
+                        <div className="p-3 bg-rose-500/20 text-rose-400 rounded-2xl border border-rose-500/30 shadow-lg shadow-rose-950/20 shrink-0 h-14 w-14 flex items-center justify-center animate-pulse">
+                          <DollarSign className="h-7 w-7" />
+                        </div>
+                        <div>
+                          <span className="text-xs font-black uppercase tracking-widest text-rose-300 block leading-tight">Global Economic Loss</span>
+                          <span className="text-[10px] text-stone-500 font-extrabold uppercase tracking-wider block">FAO capital burden calculation</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-8 mb-4">
+                      <h3 className="text-5xl sm:text-6xl md:text-7xl font-black text-rose-400 tracking-tighter leading-none flex flex-wrap items-baseline gap-x-3">
+                        <span className="bg-gradient-to-r from-rose-400 via-pink-400 to-rose-300 bg-clip-text text-transparent filter drop-shadow-[0_0_30px_oklch(0.58_0.22_25_/_0.2)]">$1.0 Trillion</span>
+                        <span className="text-sm sm:text-base font-black text-stone-400 uppercase tracking-widest font-sans">USD/yr</span>
+                      </h3>
+                    </div>
+                    
+                    <div className="text-[10px] text-stone-500 font-bold uppercase tracking-wider flex items-center gap-1.5 mt-2">
+                      <Info className="h-3.5 w-3.5 text-rose-500/50 animate-bounce" />
+                      <span>Direct economic penalty including ecological capital and natural resources.</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Secondary global stats & US categories */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-                  {/* Left Panel (2/3 width) - Global Macro Benchmarks Bento */}
                   <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* Global Metric 1: Mass */}
-                    <div className="glass-panel hover:glass-panel-glow-amber hover:-translate-y-0.5 transition-all duration-300 rounded-2xl p-5 bg-stone-900/10 border border-white/5 flex items-center gap-4 cursor-default">
-                      <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20 shadow-inner shrink-0">
-                        <Scale className="h-6 w-6" />
-                      </div>
-                      <div className="space-y-0.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 block">Global Wasted Weight</span>
-                        <h3 className="text-xl font-extrabold text-white tracking-tight">1.3 Billion <span className="text-xs font-semibold text-stone-400">tonnes/yr</span></h3>
-                        <p className="text-[10px] text-stone-500 leading-normal font-bold">UNEP Food Waste Index findings</p>
-                      </div>
-                    </div>
-
-                    {/* Global Metric 2: Financial */}
-                    <div className="glass-panel hover:glass-panel-glow-rose hover:-translate-y-0.5 transition-all duration-300 rounded-2xl p-5 bg-stone-900/10 border border-white/5 flex items-center gap-4 cursor-default">
-                      <div className="p-3 bg-rose-500/10 text-rose-400 rounded-xl border border-rose-500/20 shadow-inner shrink-0">
-                        <DollarSign className="h-6 w-6" />
-                      </div>
-                      <div className="space-y-0.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-rose-300 block">Global Economic Loss</span>
-                        <h3 className="text-xl font-extrabold text-white tracking-tight">$1.0 Trillion <span className="text-xs font-semibold text-stone-400">USD/yr</span></h3>
-                        <p className="text-[10px] text-stone-500 leading-normal font-bold">FAO capital burden calculation</p>
-                      </div>
-                    </div>
-
                     {/* Global Metric 3: Carbon Impact */}
-                    <div className="glass-panel hover:glass-panel-glow-emerald hover:-translate-y-0.5 transition-all duration-300 rounded-2xl p-5 bg-stone-900/10 border border-white/5 flex items-center gap-4 cursor-default">
-                      <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20 shadow-inner shrink-0">
-                        <Flame className="h-6 w-6" />
+                    <div className="glass-panel hover:glass-panel-glow-emerald hover:-translate-y-1 transition-all duration-300 rounded-2xl p-6 sm:p-7 bg-stone-900/10 border border-white/5 flex items-center gap-5 cursor-default relative overflow-hidden">
+                      <div className="p-4 bg-emerald-500/15 text-emerald-400 rounded-2xl border border-emerald-500/25 shadow-inner shrink-0 h-14 w-14 flex items-center justify-center">
+                        <Flame className="h-7 w-7 animate-pulse" />
                       </div>
-                      <div className="space-y-0.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 block">Global Ecological Penalty</span>
-                        <h3 className="text-xl font-extrabold text-white tracking-tight">3.3 Billion <span className="text-xs font-semibold text-stone-400">tons CO2e</span></h3>
-                        <p className="text-[10px] text-stone-500 leading-normal font-bold">Accounts for 8-10% of global GHGs</p>
+                      <div className="space-y-1">
+                        <span className="text-[11px] font-black uppercase tracking-wider text-emerald-300 block">Global Ecological Penalty</span>
+                        <h3 className="text-3xl sm:text-4xl font-black text-emerald-400 tracking-tighter leading-none flex items-baseline gap-1.5">
+                          3.3 Billion
+                          <span className="text-xs font-bold text-stone-400 uppercase tracking-wider font-sans">tons CO2e</span>
+                        </h3>
+                        <p className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">Accounts for 8-10% of global GHGs</p>
                       </div>
                     </div>
 
                     {/* Global Metric 4: Water Impact */}
-                    <div className="glass-panel hover:glass-panel-glow-sky hover:-translate-y-0.5 transition-all duration-300 rounded-2xl p-5 bg-stone-900/10 border border-white/5 flex items-center gap-4 cursor-default">
-                      <div className="p-3 bg-sky-500/10 text-sky-400 rounded-xl border border-sky-500/20 shadow-inner shrink-0">
-                        <Droplet className="h-6 w-6" />
+                    <div className="glass-panel hover:glass-panel-glow-sky hover:-translate-y-1 transition-all duration-300 rounded-2xl p-6 sm:p-7 bg-stone-900/10 border border-white/5 flex items-center gap-5 cursor-default relative overflow-hidden">
+                      <div className="p-4 bg-sky-500/15 text-sky-400 rounded-2xl border border-sky-500/25 shadow-inner shrink-0 h-14 w-14 flex items-center justify-center">
+                        <Droplet className="h-7 w-7 animate-pulse" />
                       </div>
-                      <div className="space-y-0.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-sky-300 block">Global Freshwater Waste</span>
-                        <h3 className="text-xl font-extrabold text-white tracking-tight">250 Cubic Km <span className="text-xs font-semibold text-stone-400">/yr</span></h3>
-                        <p className="text-[10px] text-stone-500 leading-normal font-bold">3 times the volume of Lake Geneva</p>
+                      <div className="space-y-1">
+                        <span className="text-[11px] font-black uppercase tracking-wider text-sky-300 block">Global Freshwater Waste</span>
+                        <h3 className="text-3xl sm:text-4xl font-black text-sky-400 tracking-tighter leading-none flex items-baseline gap-1.5">
+                          250 Cubic Km
+                          <span className="text-xs font-bold text-stone-400 uppercase tracking-wider font-sans">/yr</span>
+                        </h3>
+                        <p className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">3 times the volume of Lake Geneva</p>
                       </div>
                     </div>
                   </div>
