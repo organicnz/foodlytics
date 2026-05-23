@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import { GoogleGenAI } from "@google/genai";
 import { createServer as createViteServer } from "vite";
 import { createClient } from "@supabase/supabase-js";
-import { WasteEntry, CATEGORY_METRIC_MAP, FoodCategory } from "./src/types.js";
+import { WasteEntry, CATEGORY_METRIC_MAP, FoodCategory, WasteReason } from "./src/types.js";
 
 // Load environment variables
 dotenv.config();
@@ -100,13 +100,41 @@ function getGeminiClient(): GoogleGenAI {
 
 // REST API Endpoints
 
-// GET v1 logs
-app.get("/api-v1-logs", (req, res) => {
-  res.json(loggedWaste);
+// GET v1 logs (Persisted in Supabase)
+app.get("/api-v1-logs", async (req, res) => {
+  try {
+    if (supabase) {
+      const { data, error } = await supabase
+        .from("household_waste_logs")
+        .select("*")
+        .order("discard_date", { ascending: false });
+
+      if (!error && data) {
+        // Map database columns to front-end types
+        const mappedData: WasteEntry[] = data.map(item => ({
+          id: item.id,
+          foodName: item.food_name,
+          category: item.category as FoodCategory,
+          weight: Number(item.weight_lbs),
+          cost: Number(item.cost_usd),
+          date: item.discard_date,
+          reason: item.reason as WasteReason,
+          co2Impact: Number(item.co2_impact_lbs),
+          waterImpact: Math.round(item.water_impact_gal),
+        }));
+        res.json(mappedData);
+        return;
+      }
+    }
+    // Fallback if Supabase is not available or query fails
+    res.json(loggedWaste);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// POST v1 logs
-app.post("/api-v1-logs", (req, res) => {
+// POST v1 logs (Persisted in Supabase)
+app.post("/api-v1-logs", async (req, res) => {
   try {
     const { foodName, category, weight, cost, date, reason } = req.body;
 
@@ -121,6 +149,46 @@ app.post("/api-v1-logs", (req, res) => {
       return;
     }
 
+    const co2Val = Number((Number(weight) * metrics.co2PerLb).toFixed(1));
+    const waterVal = Math.round(Number(weight) * metrics.waterPerLb);
+
+    if (supabase) {
+      const { data, error } = await supabase
+        .from("household_waste_logs")
+        .insert({
+          food_name: String(foodName),
+          category: String(category),
+          weight_lbs: Number(weight),
+          cost_usd: Number(cost),
+          discard_date: String(date),
+          reason: String(reason),
+          co2_impact_lbs: co2Val,
+          water_impact_gal: waterVal
+        })
+        .select()
+        .single();
+
+      if (!error && data) {
+        const newEntry: WasteEntry = {
+          id: data.id,
+          foodName: data.food_name,
+          category: data.category as FoodCategory,
+          weight: Number(data.weight_lbs),
+          cost: Number(data.cost_usd),
+          date: data.discard_date,
+          reason: data.reason as WasteReason,
+          co2Impact: Number(data.co2_impact_lbs),
+          waterImpact: Math.round(data.water_impact_gal)
+        };
+        loggedWaste.push(newEntry);
+        res.status(210).json(newEntry);
+        return;
+      } else {
+        throw new Error(error?.message || "Failed to insert into Supabase.");
+      }
+    }
+
+    // In-memory fallback
     const newEntry: WasteEntry = {
       id: Math.random().toString(36).substring(2, 9),
       foodName: String(foodName),
@@ -129,10 +197,9 @@ app.post("/api-v1-logs", (req, res) => {
       cost: Number(cost),
       date: String(date),
       reason: reason,
-      co2Impact: Number((Number(weight) * metrics.co2PerLb).toFixed(1)),
-      waterImpact: Math.round(Number(weight) * metrics.waterPerLb),
+      co2Impact: co2Val,
+      waterImpact: waterVal,
     };
-
     loggedWaste.push(newEntry);
     res.status(210).json(newEntry);
   } catch (err: any) {
@@ -140,16 +207,38 @@ app.post("/api-v1-logs", (req, res) => {
   }
 });
 
-// DELETE v1 logs
-app.delete("/api-v1-logs/:id", (req, res) => {
-  const { id } = req.params;
-  const initialLength = loggedWaste.length;
-  loggedWaste = loggedWaste.filter(item => item.id !== id);
+// DELETE v1 logs (Persisted in Supabase)
+app.delete("/api-v1-logs/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
 
-  if (loggedWaste.length === initialLength) {
-    res.status(404).json({ error: "Entry not found." });
-  } else {
-    res.json({ success: true, deletedId: id });
+    if (supabase) {
+      const { error } = await supabase
+        .from("household_waste_logs")
+        .delete()
+        .eq("id", id);
+
+      if (!error) {
+        loggedWaste = loggedWaste.filter(item => item.id !== id);
+        res.json({ success: true, deletedId: id });
+        return;
+      } else {
+        res.status(404).json({ error: error.message });
+        return;
+      }
+    }
+
+    // In-memory fallback delete
+    const initialLength = loggedWaste.length;
+    loggedWaste = loggedWaste.filter(item => item.id !== id);
+
+    if (loggedWaste.length === initialLength) {
+      res.status(404).json({ error: "Entry not found." });
+    } else {
+      res.json({ success: true, deletedId: id });
+    }
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 });
 
