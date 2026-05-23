@@ -435,36 +435,6 @@ export default function Home() {
 
                 {/* Colossal Hackathon Hero Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Global Wasted Weight */}
-                  <div className="glass-panel hover:glass-panel-glow-amber hover:-translate-y-1.5 transition-all duration-500 rounded-3xl p-8 bg-gradient-to-br from-amber-500/10 via-stone-900/40 to-stone-900/10 border border-amber-500/20 flex flex-col justify-between cursor-default relative overflow-hidden min-h-[220px]">
-                    <div className="absolute -right-20 -bottom-20 w-60 h-60 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-                    <div className="absolute -left-10 -top-10 w-40 h-40 bg-amber-600/5 rounded-full blur-2xl pointer-events-none" />
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3.5">
-                        <div className="p-3 bg-amber-500/20 text-amber-400 rounded-2xl border border-amber-500/30 shadow-lg shadow-amber-950/20 shrink-0 h-14 w-14 flex items-center justify-center animate-pulse">
-                          <Scale className="h-7 w-7" />
-                        </div>
-                        <div>
-                          <span className="text-xs font-black uppercase tracking-widest text-amber-300 block leading-tight">Global Wasted Weight</span>
-                          <span className="text-[10px] text-stone-500 font-extrabold uppercase tracking-wider block">UNEP Food Waste Index findings</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-8 mb-4">
-                      <h3 className="text-5xl sm:text-6xl md:text-7xl font-black text-amber-400 tracking-tighter leading-none flex flex-wrap items-baseline gap-x-3">
-                        <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-amber-300 bg-clip-text text-transparent filter drop-shadow-[0_0_30px_oklch(0.78_0.16_80_/_0.2)]">1.3 Billion</span>
-                        <span className="text-sm sm:text-base font-black text-stone-400 uppercase tracking-widest font-sans">tonnes/yr</span>
-                      </h3>
-                    </div>
-                    
-                    <div className="text-[10px] text-stone-500 font-bold uppercase tracking-wider flex items-center gap-1.5 mt-2">
-                      <Info className="h-3.5 w-3.5 text-amber-500/50 animate-bounce" />
-                      <span>Equivalent to wasting 1/3 of all food produced for human consumption.</span>
-                    </div>
-                  </div>
-
                   {/* Global Economic Loss */}
                   <div className="glass-panel hover:glass-panel-glow-rose hover:-translate-y-1.5 transition-all duration-500 rounded-3xl p-8 bg-gradient-to-br from-rose-500/10 via-stone-900/40 to-stone-900/10 border border-rose-500/20 flex flex-col justify-between cursor-default relative overflow-hidden min-h-[220px]">
                     <div className="absolute -right-20 -bottom-20 w-60 h-60 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -492,6 +462,36 @@ export default function Home() {
                     <div className="text-[10px] text-stone-500 font-bold uppercase tracking-wider flex items-center gap-1.5 mt-2">
                       <Info className="h-3.5 w-3.5 text-rose-500/50 animate-bounce" />
                       <span>Direct economic penalty including ecological capital and natural resources.</span>
+                    </div>
+                  </div>
+
+                  {/* Global Wasted Weight */}
+                  <div className="glass-panel hover:glass-panel-glow-amber hover:-translate-y-1.5 transition-all duration-500 rounded-3xl p-8 bg-gradient-to-br from-amber-500/10 via-stone-900/40 to-stone-900/10 border border-amber-500/20 flex flex-col justify-between cursor-default relative overflow-hidden min-h-[220px]">
+                    <div className="absolute -right-20 -bottom-20 w-60 h-60 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+                    <div className="absolute -left-10 -top-10 w-40 h-40 bg-amber-600/5 rounded-full blur-2xl pointer-events-none" />
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3.5">
+                        <div className="p-3 bg-amber-500/20 text-amber-400 rounded-2xl border border-amber-500/30 shadow-lg shadow-amber-950/20 shrink-0 h-14 w-14 flex items-center justify-center animate-pulse">
+                          <Scale className="h-7 w-7" />
+                        </div>
+                        <div>
+                          <span className="text-xs font-black uppercase tracking-widest text-amber-300 block leading-tight">Global Wasted Weight</span>
+                          <span className="text-[10px] text-stone-500 font-extrabold uppercase tracking-wider block">UNEP Food Waste Index findings</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-8 mb-4">
+                      <h3 className="text-5xl sm:text-6xl md:text-7xl font-black text-amber-400 tracking-tighter leading-none flex flex-wrap items-baseline gap-x-3">
+                        <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-amber-300 bg-clip-text text-transparent filter drop-shadow-[0_0_30px_oklch(0.78_0.16_80_/_0.2)]">1.3 Billion</span>
+                        <span className="text-sm sm:text-base font-black text-stone-400 uppercase tracking-widest font-sans">tonnes/yr</span>
+                      </h3>
+                    </div>
+                    
+                    <div className="text-[10px] text-stone-500 font-bold uppercase tracking-wider flex items-center gap-1.5 mt-2">
+                      <Info className="h-3.5 w-3.5 text-amber-500/50 animate-bounce" />
+                      <span>Equivalent to wasting 1/3 of all food produced for human consumption.</span>
                     </div>
                   </div>
                 </div>
