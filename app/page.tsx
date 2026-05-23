@@ -275,54 +275,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Live DB Sync Observer HUD (Center/Right aligned) */}
-          <div className="flex flex-wrap items-center gap-4 bg-black/30 border border-white/5 px-4 py-2 rounded-2xl text-[11px] font-bold shadow-inner">
-            <div className="flex items-center gap-2 pr-3 border-r border-white/10">
-              <Database className="h-4 w-4 text-emerald-400" />
-              <span className="text-stone-400">Database Context:</span>
-              <span className="text-white font-extrabold">Supabase Cloud</span>
-            </div>
-
-            <div className="flex items-center gap-2 pr-3 border-r border-white/10">
-              <span className="text-stone-400">Connection Status:</span>
-              <span className="inline-flex items-center gap-1.5 font-extrabold text-white">
-                <span className={`h-2.5 w-2.5 rounded-full inline-block ${
-                  dbStatus === "connected"
-                    ? "bg-emerald-500 shadow-md shadow-emerald-500/50 animate-pulse"
-                    : dbStatus === "syncing"
-                    ? "bg-amber-500 shadow-md shadow-amber-500/50 animate-bounce"
-                    : "bg-rose-500 shadow-md shadow-rose-500/50 animate-ping"
-                }`} />
-                {dbStatus === "connected" && "Active 🟢"}
-                {dbStatus === "syncing" && "Syncing 🟡"}
-                {dbStatus === "error" && "Offline 🔴"}
-              </span>
-            </div>
-
-            {dbLatency !== null && (
-              <div className="flex items-center gap-1.5 pr-3 border-r border-white/10">
-                <span className="text-stone-400">Latency:</span>
-                <span className="text-emerald-400 font-mono font-extrabold">{dbLatency}ms</span>
-              </div>
-            )}
-
-            <div className="flex items-center gap-1.5 pr-2">
-              <span className="text-stone-400">Synced Items:</span>
-              <span className="text-white font-mono font-extrabold bg-white/5 border border-white/10 rounded px-1.5 py-0.5">
-                {logs.length}
-              </span>
-            </div>
-
-            <button
-              onClick={fetchLogs}
-              disabled={isLoadingLogs}
-              title="Pull fresh data from Supabase DB"
-              className="p-1 text-stone-400 hover:text-white hover:bg-white/5 rounded-lg border border-transparent hover:border-white/10 transition-all cursor-pointer disabled:opacity-50"
-            >
-              <RotateCw className={`h-3.5 w-3.5 ${dbStatus === "syncing" ? "animate-spin" : ""}`} />
-            </button>
-          </div>
-
           {/* Navigation Control Unit */}
           <div className="flex flex-wrap items-center bg-black/25 p-1 rounded-2xl border border-white/5 font-bold text-xs gap-1">
             <button
