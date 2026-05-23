@@ -154,7 +154,7 @@ app.delete("/api-v1-logs/:id", (req, res) => {
 });
 
 // GET US Food Waste Analytics with Gemini Insights
-app.get("/api-v1-us-waste-analytics", async (req, res) => {
+app.get("/api-v1-foodwaste", async (req, res) => {
   try {
     const ai = getGeminiClient();
     const systemInstruction = 
